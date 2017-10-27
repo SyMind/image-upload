@@ -1,0 +1,26 @@
+.image-upload .image-upload-button {
+    display: inline-block;
+    box-sizing: border-box;
+    height: 80px;
+    width: 80px;
+    border: 1px solid #dfdfdf;
+    background: #f1f1f1;
+}
+
+.image-upload .image-upload-label {
+    display: block;
+    height: 100%;
+    width: 100%;
+    background-size: 30px 30px;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+.image-upload .image-upload-item {
+    display: inline-block;
+    height: 80px;
+    width: 80px;
+    overflow: hidden;
+    background-size: 100% auto;
+    background-repeat: no-repeat;
+    background-position: center;
+}
