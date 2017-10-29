@@ -68,6 +68,21 @@
             this.init();
             this.event();
         }
+
+        send(file) {
+          let uri = '/index.php',
+              xhr = new XMLHttpRequest(),
+              fd = new FormData();
+
+          xhr.open('POST', uri, true);
+          xhr.onreadystatechange = function() {
+            if(xhr.readState == 4 && xhr.status == 200) {
+              alert(xhr.responseText);
+            }
+          };
+          fd.append('myFile', file);
+          xhr.send(fd);
+        }
     }
     $.extend($.fn, {
         imageUpload: function (icon) {
