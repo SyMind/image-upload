@@ -9,6 +9,8 @@
 
 .image-upload .image-upload-label {
     display: block;
+    line-height: 78px;
+    text-align: center;
     height: 100%;
     width: 100%;
     background-size: 30px 30px;

@@ -1,17 +1,18 @@
 (function ($) {
     class ImageUpload {
         
-        constructor($root, icon) {
+        constructor($root, options) {
             this.$root = $root;
             this.count = 0;
-            this.icon = icon ? icon : false;
+            this.icon = options.icon ? options.icon : false;
+            this.url = options.url ? options.icon : false;
         }
 
         init() {
             this.$button = $('<div class="image-upload-button">');
             this.$label = $('<label class="image-upload-label" for="image-upload-input">');
             if(this.icon) this.$label.css('background-image', `url("${this.icon}")`);
-            else this.$label.text('点击');
+            else this.$label.text('click');
             this.$input = $('<input style="display:none" id="image-upload-input" type="file">');
             this.canvas = $('<canvas style="display:none">')[0];
             this.context = this.canvas.getContext('2d');
@@ -30,13 +31,20 @@
                     this.compress(e.target.result, (compress_data_url) =>  {
                         this.$list.append($('<div class="image-upload-item"><div class="image-upload-close"></div></div>')
                             .css('background-image', `url(${compress_data_url})`));
-                        $.ajax({
-                          url: 'upload',
-                          type: 'POST',
-                          data: new FormData()
-                        })
+                        if(this.send(file)) {
+                          // upload success
+                          
+                        } else {
+                          // upload fail
+                        }
                     });
                 }
+            });
+
+            this.$root.click(function(e) {
+              if(e.target.className === 'image-upload-close') {
+                $(e.target.parentNode).remove();
+              }
             });
         }
 
@@ -56,38 +64,46 @@
           let arr = data_url.split(','), mime = arr[0].match()
         }
 
-        event() {
-          this.$root.click(function(e) {
-            if(e.target.className === 'image-upload-close') {
-              $(e.target.parentNode).remove();
-            }
-          });
-        }
-
         create() {
             this.init();
-            this.event();
         }
 
         send(file) {
-          let uri = '/index.php',
-              xhr = new XMLHttpRequest(),
-              fd = new FormData();
+          if(!this.url) {
+            console.log('fail');
+            return false;
+          }
+          let xhr = new XMLHttpRequest(),
+              fd = new FormData(),
+              preTime,
+              preSize;
 
-          xhr.open('POST', uri, true);
+          xhr.open('POST', this.url, true);
           xhr.onreadystatechange = function() {
-            if(xhr.readState == 4 && xhr.status == 200) {
+            if(xhr.readState === 4 && xhr.status === 200) {
               alert(xhr.responseText);
             }
           };
-          fd.append('myFile', file);
+          xhr.upload.onloadstart = function() {
+            preTime = new Date().getTime();
+            preSize = 0;
+          };
+          xhr.upload.onprogress = function(e) {
+            let now = new Date().getTime(),
+                spend = (now - preTime) / 1000,
+                sect = e.loaded - preSize;
+            console.log(spend, sect);
+          };
+          fd.append('image', file);
           xhr.send(fd);
         }
     }
+
     $.extend($.fn, {
-        imageUpload: function (icon) {
-            let loader = new ImageUpload(this, icon);
+        imageUpload: function (options) {
+            let loader = new ImageUpload(this, options);
             loader.create();
+            return loader;
         }
     })
     
