@@ -1,0 +1,127 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+    <style>
+        .box {
+            position: relative;
+            height: 78px;
+            background: red;
+        }
+        .item {
+            position: absolute;
+            display: inline-block;
+            left: 0;
+            top: 0;
+            height: 78px;
+            width: 78px;
+            transition: all 1s;
+            background: blue;
+        }
+        .item2 {
+            left: 78px;
+            background: green;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <div class="item"></div>
+        <div class="item item2"></div>
+    </div>
+    <script>
+        class Wrapper {
+            constructor (el) {
+
+            }
+
+            judge () {
+                
+            }
+        }
+        class Item {
+            constructor (el) {
+                this.el = el
+
+                Object.defineProperty(this, 'x', {
+                    get: function () {
+                        return this.el.offsetLeft
+                    },
+                    set:function (value) {
+                        this.el.style.left = value + 'px'
+                    }
+                })
+
+                Object.defineProperty(this, 'y', {
+                    get: function () {
+                        return this.el.offsetTop
+                    },
+                    set:function (value) {
+                        this.el.style.top = value + 'px'
+                    }
+                })
+
+                el.addEventListener('touchstart', this)
+                el.addEventListener('touchmove', this)
+                el.addEventListener('touchend', this)
+            }
+
+            handleEvent (e) {
+                switch (e.type) {
+                    case 'touchstart':
+                        this.start(e)
+                        break
+                    case 'touchmove':
+                        this.move(e)
+                        break
+                    case 'touchend':
+                        this.end(e)
+                        break
+                }
+            }
+
+            start (event) {
+                let touch = event.touches[0]
+                this._startX = parseInt(this.el.offsetLeft)
+                this._startY = parseInt(this.el.offsetTop)
+                this._pageX = touch.pageX
+                this._pageY = touch.pageY
+            }
+
+            move (event) {
+                this.el.style.transitionDuration = '0s'
+
+                let touch = event.touches[0]
+                let deltaX = touch.pageX - this._pageX
+                let deltaY = touch.pageY - this._pageY
+                this.x = this._startX + deltaX
+                this.y = this._startY + deltaY
+            }
+
+            end (event) {
+                this.el.style.transitionDuration = '1s'
+
+                this.x = this._startX
+                this.y = this._startY
+            }
+        }
+        var items = document.getElementsByClassName('item');
+        for (var item of items) {
+            new Item(item);
+        }
+        // item.ontouchstart = function (event) {
+        //     var touch = event.touches[0];
+        //     var touchX = touch.pageX;
+        // }
+        // item.ontouchmove = function (event) {
+        //     var touch = event.touches[0];
+        //     var touchX = touch.pageX;
+        // }
+        // item.ontouchend = function (event) {
+
+        // }
+    </script>
+</body>
+</html>
