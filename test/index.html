@@ -34,22 +34,49 @@
     <script>
         class Wrapper {
             constructor (el) {
+                this.el = el
+                
+                this.elements = []
+                for (let i = 0, len = el.children.length; i < len; i++) {
+                    this.elements.push(new Element(el.children[i]))
+                }
 
+                console.log(this.elements)
+                let temp = this.elements[1]
+                this.elements[0].moveEvent((source) => {
+                    if (source.x > temp.x && !source.endY && !source.endX) {
+                        source.endX = temp.x
+                        source.endY = temp.y
+                        temp.moveTo(source.startX, source.startY)
+                    }
+                })
             }
 
             judge () {
                 
             }
         }
-        class Item {
+        class Element {
             constructor (el) {
                 this.el = el
 
+                let isTransition = false
+                Object.defineProperty(this, 'isTransition', {
+                    get () {
+                        return isTransition
+                    },
+                    set (value) {
+                        isTransition = value
+                        let pointerEvents = isTransition ? 'none' : 'auto'
+                        this.el.style.pointerEvents = pointerEvents
+                    }
+                })
+
                 Object.defineProperty(this, 'x', {
-                    get: function () {
+                    get () {
                         return this.el.offsetLeft
                     },
-                    set:function (value) {
+                    set (value) {
                         this.el.style.left = value + 'px'
                     }
                 })
@@ -66,51 +93,84 @@
                 el.addEventListener('touchstart', this)
                 el.addEventListener('touchmove', this)
                 el.addEventListener('touchend', this)
+                el.addEventListener('transitionEnd', this)
+                el.addEventListener('webkitTransitionEnd', this)
+                el.addEventListener('oTransitionEnd', this)
+                el.addEventListener('MSTransitionEnd', this)
             }
 
             handleEvent (e) {
                 switch (e.type) {
                     case 'touchstart':
-                        this.start(e)
+                        this._start(e)
                         break
                     case 'touchmove':
-                        this.move(e)
+                        this._move(e)
                         break
                     case 'touchend':
-                        this.end(e)
+                        this._end(e)
+                        break
+                    case 'transitionEnd':
+                    case 'webkitTransitionEnd':
+                    case 'oTransitionEnd':
+                    case 'MSTransitionEnd':
+                        this._transitionEnd(e)
                         break
                 }
             }
 
-            start (event) {
+            moveEvent (handle) {
+                this.moveEventHandle = handle
+            }
+
+            moveTo (x, y) {
+                this.el.style.transitionDuration = '1s'
+
+                this.x = x
+                this.y = y
+            }
+
+            _start (event) {
                 let touch = event.touches[0]
-                this._startX = parseInt(this.el.offsetLeft)
-                this._startY = parseInt(this.el.offsetTop)
+                this.startX = parseInt(this.el.offsetLeft)
+                this.startY = parseInt(this.el.offsetTop)
                 this._pageX = touch.pageX
                 this._pageY = touch.pageY
             }
 
-            move (event) {
+            _move (event) {
                 this.el.style.transitionDuration = '0s'
 
                 let touch = event.touches[0]
                 let deltaX = touch.pageX - this._pageX
                 let deltaY = touch.pageY - this._pageY
-                this.x = this._startX + deltaX
-                this.y = this._startY + deltaY
+                this.x = this.startX + deltaX
+                this.y = this.startY + deltaY
+
+                if (this.moveEventHandle) {
+                    this.moveEventHandle(this)
+                }
             }
 
-            end (event) {
+            _end (event) {
+                this.isTransition = true
                 this.el.style.transitionDuration = '1s'
+                
+                if (this.endX) this.x = this.endX
+                else this.x = this.startX
+                if (this.endY) this.y = this.endY
+                else this.y = this.startY
 
-                this.x = this._startX
-                this.y = this._startY
+                this.endX = null
+                this.endY = null
+            }
+
+            _transitionEnd (event) {
+                this.isTransition = false
             }
         }
-        var items = document.getElementsByClassName('item');
-        for (var item of items) {
-            new Item(item);
-        }
+        var box = document.querySelector('.box')
+        var wrapper = new Wrapper(box)
         // item.ontouchstart = function (event) {
         //     var touch = event.touches[0];
         //     var touchX = touch.pageX;
