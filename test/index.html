@@ -1,176 +1,202 @@
 <html lang="en">
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta http-equiv="X-UA-Compatible" content="ie=edge">
-    <title>Document</title>
-    <style>
-        .box {
-            position: relative;
-            height: 78px;
-            background: red;
-        }
-        .item {
-            position: absolute;
-            display: inline-block;
-            left: 0;
-            top: 0;
-            height: 78px;
-            width: 78px;
-            transition: all 1s;
-            background: blue;
-        }
-        .item2 {
-            left: 78px;
-            background: green;
-        }
-    </style>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    * {
+      margin: 0;
+    }
+
+    .box {
+      position: relative;
+      width: 100%;
+      height: 78px;
+      overflow: hidden;
+      background: red;
+    }
+
+    .item {
+      position: absolute;
+      display: inline-block;
+      left: 0;
+      top: 0;
+      height: 78px;
+      width: 78px;
+      transition: all 1s;
+      background: blue;
+    }
+
+    .item2 {
+      left: 78px;
+      background: green;
+    }
+  </style>
 </head>
+
 <body>
-    <div class="box">
-        <div class="item"></div>
-        <div class="item item2"></div>
-    </div>
-    <script>
-        class Wrapper {
-            constructor (el) {
-                this.el = el
-                
-                this.elements = []
-                for (let i = 0, len = el.children.length; i < len; i++) {
-                    this.elements.push(new Element(el.children[i]))
-                }
+  <div class="box">
+    <div class="item"></div>
+    <div class="item item2"></div>
+  </div>
+  <script>
+    class Wrapper {
+      constructor(el) {
+        this.el = el
 
-                console.log(this.elements)
-                let temp = this.elements[1]
-                this.elements[0].moveEvent((source) => {
-                    if (source.x > temp.x && !source.endY && !source.endX) {
-                        source.endX = temp.x
-                        source.endY = temp.y
-                        temp.moveTo(source.startX, source.startY)
-                    }
-                })
-            }
+        this.elements = []
+        this.elementsOrigin = []
 
-            judge () {
-                
-            }
+        for (let i = 0, len = el.children.length; i < len; i++) {
+          let child = new Element(el.children[i])
+          child.idx = i
+          this.elements.push(child)
+          this.elementsOrigin.push({
+            x: child.x,
+            y: child.y
+          })
         }
-        class Element {
-            constructor (el) {
-                this.el = el
 
-                let isTransition = false
-                Object.defineProperty(this, 'isTransition', {
-                    get () {
-                        return isTransition
-                    },
-                    set (value) {
-                        isTransition = value
-                        let pointerEvents = isTransition ? 'none' : 'auto'
-                        this.el.style.pointerEvents = pointerEvents
-                    }
-                })
+        let temp = this.elements[1]
+        this.elements[0].moveEvent((source) => {
+          if (source.x > temp.x && source.x - temp.x < 78 && source.endY === null && source.endX === null) {
+            source.endX = this.elementsOrigin[temp.idx].x
+            source.endY = this.elementsOrigin[temp.idx].y
+            temp.moveTo(this.elementsOrigin[source.idx].x, this.elementsOrigin[source.idx].y)
+            let idx = source.idx
+            source.idx = temp.idx
+            temp.idx = idx
+          }
+        })
+      }
 
-                Object.defineProperty(this, 'x', {
-                    get () {
-                        return this.el.offsetLeft
-                    },
-                    set (value) {
-                        this.el.style.left = value + 'px'
-                    }
-                })
+      judge() {
 
-                Object.defineProperty(this, 'y', {
-                    get: function () {
-                        return this.el.offsetTop
-                    },
-                    set:function (value) {
-                        this.el.style.top = value + 'px'
-                    }
-                })
+      }
+    }
+    class Element {
+      constructor(el) {
+        this.el = el
 
-                el.addEventListener('touchstart', this)
-                el.addEventListener('touchmove', this)
-                el.addEventListener('touchend', this)
-                el.addEventListener('transitionEnd', this)
-                el.addEventListener('webkitTransitionEnd', this)
-                el.addEventListener('oTransitionEnd', this)
-                el.addEventListener('MSTransitionEnd', this)
-            }
+        this.endX = null
+        this.endY = null
 
-            handleEvent (e) {
-                switch (e.type) {
-                    case 'touchstart':
-                        this._start(e)
-                        break
-                    case 'touchmove':
-                        this._move(e)
-                        break
-                    case 'touchend':
-                        this._end(e)
-                        break
-                    case 'transitionEnd':
-                    case 'webkitTransitionEnd':
-                    case 'oTransitionEnd':
-                    case 'MSTransitionEnd':
-                        this._transitionEnd(e)
-                        break
-                }
-            }
+        let isTransition = false
+        Object.defineProperty(this, 'isTransition', {
+          get() {
+            return isTransition
+          },
+          set(value) {
+            isTransition = value
+            let pointerEvents = isTransition ? 'none' : 'auto'
+            this.el.style.pointerEvents = pointerEvents
+          }
+        })
 
-            moveEvent (handle) {
-                this.moveEventHandle = handle
-            }
+        Object.defineProperty(this, 'x', {
+          get() {
+            return this.el.offsetLeft
+          },
+          set(value) {
+            this.el.style.left = value + 'px'
+          }
+        })
 
-            moveTo (x, y) {
-                this.el.style.transitionDuration = '1s'
+        Object.defineProperty(this, 'y', {
+          get: function () {
+            return this.el.offsetTop
+          },
+          set: function (value) {
+            this.el.style.top = value + 'px'
+          }
+        })
 
-                this.x = x
-                this.y = y
-            }
+        el.addEventListener('touchstart', this)
+        el.addEventListener('touchmove', this)
+        el.addEventListener('touchend', this)
+        el.addEventListener('transitionEnd', this)
+        el.addEventListener('webkitTransitionEnd', this)
+        el.addEventListener('oTransitionEnd', this)
+        el.addEventListener('MSTransitionEnd', this)
+      }
 
-            _start (event) {
-                let touch = event.touches[0]
-                this.startX = parseInt(this.el.offsetLeft)
-                this.startY = parseInt(this.el.offsetTop)
-                this._pageX = touch.pageX
-                this._pageY = touch.pageY
-            }
-
-            _move (event) {
-                this.el.style.transitionDuration = '0s'
-
-                let touch = event.touches[0]
-                let deltaX = touch.pageX - this._pageX
-                let deltaY = touch.pageY - this._pageY
-                this.x = this.startX + deltaX
-                this.y = this.startY + deltaY
-
-                if (this.moveEventHandle) {
-                    this.moveEventHandle(this)
-                }
-            }
-
-            _end (event) {
-                this.isTransition = true
-                this.el.style.transitionDuration = '1s'
-                
-                if (this.endX) this.x = this.endX
-                else this.x = this.startX
-                if (this.endY) this.y = this.endY
-                else this.y = this.startY
-
-                this.endX = null
-                this.endY = null
-            }
-
-            _transitionEnd (event) {
-                this.isTransition = false
-            }
+      handleEvent(e) {
+        switch (e.type) {
+          case 'touchstart':
+            this._start(e)
+            break
+          case 'touchmove':
+            this._move(e)
+            break
+          case 'touchend':
+            this._end(e)
+            break
+          case 'transitionEnd':
+          case 'webkitTransitionEnd':
+          case 'oTransitionEnd':
+          case 'MSTransitionEnd':
+            this._transitionEnd(e)
+            break
         }
-        var box = document.querySelector('.box')
-        var wrapper = new Wrapper(box)
+      }
+
+      moveEvent(handle) {
+        this.moveEventHandle = handle
+      }
+
+      moveTo(x, y) {
+        this.el.style.transitionDuration = '1s'
+
+        this.x = x
+        this.y = y
+      }
+
+      _start(event) {
+        let touch = event.touches[0]
+        this.startX = parseInt(this.el.offsetLeft)
+        this.startY = parseInt(this.el.offsetTop)
+        this._pageX = touch.pageX
+        this._pageY = touch.pageY
+      }
+
+      _move(event) {
+        this.el.style.transitionDuration = '0s'
+
+        let touch = event.touches[0]
+        let deltaX = touch.pageX - this._pageX
+        let deltaY = touch.pageY - this._pageY
+        this.x = this.startX + deltaX
+        this.y = this.startY + deltaY
+
+        if (this.moveEventHandle) {
+          this.moveEventHandle(this)
+        }
+      }
+
+      _end(event) {
+        if (this.endEventHandle) {
+          this.endEventHandle(this)
+        }
+        this.isTransition = true
+        this.el.style.transitionDuration = '1s'
+
+        if (this.endX !== null) this.x = this.endX
+        else this.x = this.startX
+        if (this.endY !== null) this.y = this.endY
+        else this.y = this.startY
+
+        this.endX = null
+        this.endY = null
+      }
+
+      _transitionEnd(event) {
+        this.isTransition = false
+      }
+    }
+    var box = document.querySelector('.box')
+    var wrapper = new Wrapper(box)
         // item.ontouchstart = function (event) {
         //     var touch = event.touches[0];
         //     var touchX = touch.pageX;
@@ -182,6 +208,7 @@
         // item.ontouchend = function (event) {
 
         // }
-    </script>
+  </script>
 </body>
+
 </html>
