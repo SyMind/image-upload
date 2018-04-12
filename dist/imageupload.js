@@ -163,21 +163,21 @@
       this.slots = [];
       this.lastIdx = -1;
       this.elementSize = 78;
-      this.col = Math.floor(this.el.offsetWidth / this.elementSize);
+      this.column = Math.floor(this.el.offsetWidth / this.elementSize);
       this.row = 0;
     }
 
     createClass(Wrapper, [{
-      key: 'addElement',
-      value: function addElement(el) {
+      key: 'appendElement',
+      value: function appendElement(el) {
         var idx = ++this.lastIdx;
 
         var divEl = document.createElement('div');
         divEl.appendChild(el);
         divEl.className = 'item item' + idx;
         divEl.style.overflow = 'hidden';
-        divEl.style.left = this.slots.length % this.col * this.elementSize + 'px';
-        divEl.style.top = (this.slots.length % this.col === 0 ? this.row++ : this.row - 1) * this.elementSize + 'px';
+        divEl.style.left = this.slots.length % this.column * this.elementSize + 'px';
+        divEl.style.top = (this.slots.length % this.column === 0 ? this.row++ : this.row - 1) * this.elementSize + 'px';
 
         this.el.appendChild(divEl);
 
@@ -192,7 +192,7 @@
           el: element
         });
 
-        this.row = Math.ceil(this.slots.length / this.col);
+        this.row = Math.ceil(this.slots.length / this.column);
         this.el.style.height = this.row * this.elementSize + 'px';
       }
     }, {
@@ -235,7 +235,7 @@
       value: function _judge(x, y) {
         var extra = 0.5 * this.elementSize;
         var minX = -extra;
-        var maxX = (this.col - 1) * this.elementSize + extra;
+        var maxX = (this.column - 1) * this.elementSize + extra;
         var minY = -extra;
         var maxY = (this.row - 1) * this.elementSize + extra;
         if (this.row >= 2) maxY = (this.row - 2) * this.elementSize + extra;
@@ -243,28 +243,28 @@
         if (x < minX && y < minY) {
           return 0;
         } else if (x > maxX && y < minY) {
-          if (this.slots.length >= this.col) return this.col - 1;else return this.slots.length - 1;
+          if (this.slots.length >= this.column) return this.column - 1;else return this.slots.length - 1;
         } else if (x < minX && y > maxY) {
-          return (this.row - 1) * this.col;
+          return (this.row - 1) * this.column;
         } else if (x > maxX && y > maxY) {
-          var idx = this.row * this.col - 1;
-          if (idx >= this.slots.length) return idx - this.col;else return idx;
+          var idx = this.row * this.column - 1;
+          if (idx >= this.slots.length) return idx - this.column;else return idx;
         } else if (y < minY) {
-          var end = this.slots.length >= this.col ? this.col : this.slots.length;
+          var end = this.slots.length >= this.column ? this.column : this.slots.length;
           for (var i = 0; i < end; i++) {
             if (x >= this.slots[i].x - extra && x < this.slots[i].x + extra) {
               return i;
             }
           }
         } else if (y > maxY) {
-          var start = (this.row - 1) * this.col;
-          var _end = this.row * this.col;
+          var start = (this.row - 1) * this.column;
+          var _end = this.row * this.column;
           for (var _i2 = start; _i2 < _end; _i2++) {
             var slot = this.slots[_i2];
             var result = _i2;
             if (!this.slots[_i2]) {
-              slot = this.slots[_i2 - this.col];
-              var _result = _i2 - this.col;
+              slot = this.slots[_i2 - this.column];
+              var _result = _i2 - this.column;
             }
             if (x >= slot.x - extra && x < slot.x + extra) {
               return result;
@@ -293,10 +293,10 @@
     createClass(ImageUpload, [{
       key: 'init',
       value: function init() {
-        var labelEl = document.createElement('label');
+        var labelEl = this.labelEl = document.createElement('label');
         labelEl.style.display = 'inline-block';
         labelEl.style.boxSizing = 'border-box';
-        labelEl.style.position = 'relative';
+        labelEl.style.position = 'absolute';
         labelEl.style.verticalAlign = 'top';
         labelEl.style.height = '78px';
         labelEl.style.width = '78px';
@@ -324,13 +324,16 @@
         var wrapperEl = document.createElement('div');
         wrapperEl.style.position = 'relative';
         wrapperEl.style.width = '100%';
-        wrapperEl.style.backgroundColor = 'green';
 
         this.el.appendChild(wrapperEl);
         this.el.appendChild(labelEl);
         this.el.appendChild(inputEl);
 
         this.wrapper = new Wrapper(wrapperEl);
+
+        this.el.style.position = 'relative';
+        this.el.style.minHeight = this.wrapper.elementSize + 'px';
+
         inputEl.addEventListener('change', this);
       }
     }, {
@@ -352,11 +355,25 @@
         reader.readAsDataURL(file);
         reader.onload = function (event) {
           _this._compress(event.target.result, function (dataUrl) {
-            var imageEl = document.createElement('img');
-            imageEl.src = dataUrl;
-            _this.wrapper.addElement(imageEl);
+            var divEl = document.createElement('div');
+            divEl.style.height = '100%';
+            divEl.style.backgroundImage = 'url(' + dataUrl + ')';
+            divEl.style.backgroundRepeat = 'no-repeat';
+            divEl.style.backgroundSize = 'cover';
+            divEl.style.backgroundPosition = 'center';
+            _this.wrapper.appendElement(divEl);
+            _this._adjust();
           });
         };
+      }
+    }, {
+      key: '_adjust',
+      value: function _adjust() {
+        var last = this.wrapper.slots.length % this.wrapper.column;
+        if (last === 0) {} else {
+          this.labelEl.style.top = (this.wrapper.row - 1) * this.wrapper.elementSize + 'px';
+          this.labelEl.style.left = last * this.wrapper.elementSize + 'px';
+        }
       }
     }, {
       key: '_compress',
@@ -371,10 +388,35 @@
         var image = new Image();
         image.src = dataUrl;
         image.onload = function () {
-          _this2.context.clearRect(0, 0, _this2.canvas.width, _this2.canvas.height);
+          _this2.canvas.width = image.naturalWidth;
+          _this2.canvas.height = image.naturalHeight;
+          _this2.context.clearRect(0, 0, image.naturalWidth, image.naturalHeight);
           _this2.context.drawImage(image, 0, 0, image.naturalWidth, image.naturalHeight);
           callback(_this2.canvas.toDataURL('image/jpeg', 0.8));
         };
+      }
+    }, {
+      key: '_send',
+      value: function _send(content) {
+        var xhr = new XMLHttpRequest();
+        var fd = new FormData();
+
+        if (Array.isArray(content)) {
+          content.forEach(function (file) {
+            fd.append('file', file);
+          });
+        } else {
+          fd.append('file', content);
+        }
+
+        xhr.open('POST', this.url, true);
+        xhr.onreadystatechange = function () {
+          if (xhr.readyState === 4 && xhr.status === 200) {
+            alert(xhr.responseText);
+          }
+        };
+
+        xhr.send(fd);
       }
     }]);
     return ImageUpload;

@@ -7,10 +7,10 @@ export default class ImageUpload {
   }
 
   init () {
-    let labelEl = document.createElement('label')
+    let labelEl = this.labelEl = document.createElement('label')
     labelEl.style.display = 'inline-block'
     labelEl.style.boxSizing = 'border-box'
-    labelEl.style.position = 'relative'
+    labelEl.style.position = 'absolute'
     labelEl.style.verticalAlign = 'top'
     labelEl.style.height = '78px'
     labelEl.style.width = '78px'
@@ -38,13 +38,16 @@ export default class ImageUpload {
     let wrapperEl = document.createElement('div')
     wrapperEl.style.position = 'relative'
     wrapperEl.style.width = '100%'
-    wrapperEl.style.backgroundColor = 'green'
 
     this.el.appendChild(wrapperEl)
     this.el.appendChild(labelEl)
     this.el.appendChild(inputEl)
 
     this.wrapper = new Wrapper(wrapperEl)
+
+    this.el.style.position = 'relative'
+    this.el.style.minHeight = this.wrapper.elementSize + 'px'
+
     inputEl.addEventListener('change', this)
   }
 
@@ -62,10 +65,25 @@ export default class ImageUpload {
     reader.readAsDataURL(file)
     reader.onload = (event) => {
       this._compress(event.target.result, (dataUrl) => {
-        let imageEl = document.createElement('img')
-        imageEl.src = dataUrl
-        this.wrapper.addElement(imageEl)
+        let divEl = document.createElement('div')
+        divEl.style.height = '100%'
+        divEl.style.backgroundImage = `url(${dataUrl})`
+        divEl.style.backgroundRepeat = 'no-repeat'
+        divEl.style.backgroundSize = 'cover'
+        divEl.style.backgroundPosition = 'center'
+        this.wrapper.appendElement(divEl)
+        this._adjust()
       })
+    }
+  }
+
+  _adjust () {
+    let last = this.wrapper.slots.length % this.wrapper.column
+    if (last === 0) {
+
+    } else {
+      this.labelEl.style.top = (this.wrapper.row - 1) * this.wrapper.elementSize + 'px'
+      this.labelEl.style.left = last * this.wrapper.elementSize + 'px'
     }
   }
 
@@ -78,9 +96,33 @@ export default class ImageUpload {
     let image = new Image()
     image.src = dataUrl
     image.onload = () => {
-      this.context.clearRect(0, 0 , this.canvas.width, this.canvas.height)
+      this.canvas.width = image.naturalWidth
+      this.canvas.height = image.naturalHeight
+      this.context.clearRect(0, 0 , image.naturalWidth, image.naturalHeight)
       this.context.drawImage(image, 0, 0, image.naturalWidth, image.naturalHeight)
       callback(this.canvas.toDataURL('image/jpeg', 0.8))
     }
+  }
+
+  _send (content) {
+    let xhr = new XMLHttpRequest()
+    let fd = new FormData()
+
+    if (Array.isArray(content)) {
+      content.forEach((file) => {
+        fd.append('file', file)
+      })
+    } else {
+      fd.append('file', content)
+    }
+
+    xhr.open('POST', this.url, true)
+    xhr.onreadystatechange = () => {
+      if (xhr.readyState === 4 && xhr.status === 200) {
+        alert(xhr.responseText)
+      }
+    }
+
+    xhr.send(fd)
   }
 }

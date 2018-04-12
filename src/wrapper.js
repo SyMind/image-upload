@@ -6,19 +6,19 @@ export default class Wrapper {
     this.slots = []
     this.lastIdx = -1
     this.elementSize = 78
-    this.col = Math.floor(this.el.offsetWidth / this.elementSize)
+    this.column = Math.floor(this.el.offsetWidth / this.elementSize)
     this.row = 0
   }
 
-  addElement (el) {
+  appendElement (el) {
     let idx = ++this.lastIdx
 
     let divEl = document.createElement('div')
     divEl.appendChild(el)
     divEl.className = 'item item' + idx
     divEl.style.overflow = 'hidden'
-    divEl.style.left = (this.slots.length % this.col) * this.elementSize + 'px'
-    divEl.style.top = (this.slots.length % this.col === 0 ? this.row++ : this.row - 1) * this.elementSize + 'px'
+    divEl.style.left = (this.slots.length % this.column) * this.elementSize + 'px'
+    divEl.style.top = (this.slots.length % this.column === 0 ? this.row++ : this.row - 1) * this.elementSize + 'px'
 
     this.el.appendChild(divEl)
 
@@ -33,7 +33,7 @@ export default class Wrapper {
       el: element
     })
 
-    this.row = Math.ceil(this.slots.length / this.col)
+    this.row = Math.ceil(this.slots.length / this.column)
     this.el.style.height = this.row * this.elementSize + 'px'
   }
 
@@ -73,7 +73,7 @@ export default class Wrapper {
   _judge (x, y) {
     let extra = 0.5 * this.elementSize
     let minX = - extra
-    let maxX = (this.col - 1) * this.elementSize + extra
+    let maxX = (this.column - 1) * this.elementSize + extra
     let minY = - extra
     let maxY = (this.row - 1) * this.elementSize + extra
     if (this.row >= 2) maxY = (this.row - 2) * this.elementSize + extra
@@ -81,30 +81,30 @@ export default class Wrapper {
     if (x < minX && y < minY) {
       return 0
     } else if (x > maxX && y < minY) {
-      if (this.slots.length >= this.col) return this.col - 1
+      if (this.slots.length >= this.column) return this.column - 1
       else return this.slots.length - 1
     } else if (x < minX && y > maxY) {
-      return (this.row - 1) * this.col
+      return (this.row - 1) * this.column
     } else if (x > maxX && y > maxY) {
-      let idx = this.row * this.col - 1
-      if (idx >= this.slots.length) return idx - this.col
+      let idx = this.row * this.column - 1
+      if (idx >= this.slots.length) return idx - this.column
       else return idx
     } else if (y < minY) {
-      let end = this.slots.length >= this.col ? this.col : this.slots.length
+      let end = this.slots.length >= this.column ? this.column : this.slots.length
       for (let i = 0; i < end; i++) {
         if (x >= this.slots[i].x - extra && x < this.slots[i].x + extra) {
           return i
         }
       }
     } else if (y > maxY) {
-      let start = (this.row - 1) * this.col
-      let end = this.row * this.col
+      let start = (this.row - 1) * this.column
+      let end = this.row * this.column
       for (let i = start; i < end; i++) {
         let slot = this.slots[i]
         let result = i
         if (!this.slots[i]) {
-          slot = this.slots[i - this.col]
-          let result = i - this.col
+          slot = this.slots[i - this.column]
+          let result = i - this.column
         }
         if (x >= slot.x - extra && x < slot.x + extra) {
           return result
