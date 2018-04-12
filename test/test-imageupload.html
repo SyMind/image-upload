@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <script src="../dist/imageupload.js"></script>
+  <style>
+    .box {
+      position: relative;
+      width: 100%;
+      height: 156px;
+      background: red;
+    }
+
+    .item {
+      position: absolute;
+      display: inline-block;
+      left: 0;
+      top: 0;
+      height: 78px;
+      width: 78px;
+      transition: all 1s;
+      background: blue;
+    }
+
+    .item1 {
+      background: green;
+    }
+
+    .item2 {
+      background: orange;
+    }
+
+    .item3 {
+      background: pink;
+    }
+
+    .item4 {
+      background: azure;
+    }
+
+    #imageupload {
+      overflow: hidden;
+    }
+  </style>
+</head>
+<body>
+  <div id="imageupload"></div>
+
+  <script>
+    let imageUploadEl = document.querySelector('#imageupload')
+    new ImageUpload(imageUploadEl).init()
+  </script>
+</body>
+</html>

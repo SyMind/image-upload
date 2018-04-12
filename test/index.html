@@ -29,23 +29,18 @@
     }
 
     .item1 {
-      left: 78px;
       background: green;
     }
 
     .item2 {
-      left: 156px;
       background: orange;
     }
 
     .item3 {
-      left: 234px;
       background: pink;
     }
 
     .item4 {
-      left: 0px;
-      top: 78px;
       background: azure;
     }
   </style>
@@ -67,26 +62,19 @@
         this.lastIdx = -1
         this.elementSize = 78
         this.col = Math.floor(this.el.offsetWidth / this.elementSize)
-        this.row = 1
-
-        // ;[].slice.call(el.children).forEach((child, idx) => {
-        //   let obj = new Element(child)
-        //   obj.idx = idx
-        //   this.slots.push({
-        //     x: obj.x,
-        //     y: obj.y,
-        //     el: obj
-        //   })
-        // })
+        this.row = 0
       }
 
-      createElement () {
+      createElement (el) {
         let idx = ++this.lastIdx
         let div = document.createElement('div')
         div.className = 'item item' + idx
-        div.textContent = idx
+        div.style.left = (this.slots.length % this.col) * this.elementSize
+        div.style.top = (this.slots.length % this.col === 0 ? this.row++ : this.row - 1) * this.elementSize
+        div.appendChild(el)
         this.el.appendChild(div)
-        
+        this.el.style.height = this.row * this.elementSize + 'px'
+
         let obj = new Element(div)
         obj.idx = idx
         obj.moveEvent = this._moveEventHandle.bind(this)
@@ -101,59 +89,62 @@
         this.row = Math.ceil(this.slots.length / this.col)
       }
 
-      _moveEventHandle (source) {
+      _moveEventHandle(source) {
         let idx = this._judge(source.x, source.y)
-          if (typeof idx === 'number' && idx !== source.idx) {
-            if (idx < source.idx) {
-              for (let i = source.idx; i > idx; i--) {
-                let current = this.slots[i]
-                let last = this.slots[i - 1]
-                last.el.x = current.x
-                last.el.y = current.y
-                last.el.idx = current.el.idx
-                current.el = last.el
-              }
-            } else {
-              for (let i = source.idx; i < idx; i++) {
-                let current = this.slots[i]
-                let next = this.slots[i + 1]
-                next.el.x = current.x
-                next.el.y = current.y
-                next.el.idx = current.el.idx
-                current.el = next.el
-              }
+        if (typeof idx === 'number' && idx !== source.idx) {
+          if (idx < source.idx) {
+            for (let i = source.idx; i > idx; i--) {
+              let current = this.slots[i]
+              let last = this.slots[i - 1]
+              last.el.x = current.x
+              last.el.y = current.y
+              last.el.idx = current.el.idx
+              current.el = last.el
             }
+          } else {
+            for (let i = source.idx; i < idx; i++) {
+              let current = this.slots[i]
+              let next = this.slots[i + 1]
+              next.el.x = current.x
+              next.el.y = current.y
+              next.el.idx = current.el.idx
+              current.el = next.el
+            }
+          }
 
-            source.idx = idx
-            this.slots[idx].el = source
+          source.idx = idx
+          this.slots[idx].el = source
         }
       }
 
-      _endEventHandle (source) {
+      _endEventHandle(source) {
         source.endX = this.slots[source.idx].x
         source.endY = this.slots[source.idx].y
       }
 
-      // 边界处理还是有问题
-      _judge (x, y) {
-        let maxX = (this.col - 1) * this.elementSize
-        let maxY = (this.row - 1) * this.elementSize
+      _judge(x, y) {
+        let extra = 0.5 * this.elementSize
+        let minX = - extra
+        let maxX = (this.col - 1) * this.elementSize + extra
+        let minY = - extra
+        let maxY = (this.row - 1) * this.elementSize + extra
+        if (this.row >= 2) maxY = (this.row - 2) * this.elementSize + extra
 
-        if (x < 0 && y < 0) {
+        if (x < minX && y < minY) {
           return 0
-        } else if (x > maxX && y < 0) {
+        } else if (x > maxX && y < minY) {
           if (this.slots.length >= this.col) return this.col - 1
           else return this.slots.length - 1
-        } else if (x < 0 && y > maxY) {
+        } else if (x < minX && y > maxY) {
           return (this.row - 1) * this.col
         } else if (x > maxX && y > maxY) {
           let idx = this.row * this.col - 1
           if (idx >= this.slots.length) return idx - this.col
           else return idx
-        } else if (y < 0) {
+        } else if (y < minY) {
           let end = this.slots.length >= this.col ? this.col : this.slots.length
           for (let i = 0; i < end; i++) {
-            if (x >= this.slots[i].x && x < this.slots[i + 1].x) {
+            if (x >= this.slots[i].x - extra && x < this.slots[i].x + extra) {
               return i
             }
           }
@@ -161,19 +152,20 @@
           let start = (this.row - 1) * this.col
           let end = this.row * this.col
           for (let i = start; i < end; i++) {
-            let slot1 = this.slots[i - this.col]
-            let slot2 = this.slots[i - this.col + 1]
-            if (x >= slot1.x && x < slot2.x) {
-              if (this.slots[i]) return i
-              else return i - this.col
+            let slot = this.slots[i]
+            let result = i
+            if (!this.slots[i]) {
+              slot = this.slots[i - this.col]
+              let result = i - this.col
+            }
+            if (x >= slot.x - extra && x < slot.x + extra) {
+              return result
             }
           }
         }
-        for (let i = 0, len = (this.row - 1) * this.col; i < len; i++) {
-          if ((i + 1) % this.col === 0) continue
-          let slot1 = this.slots[i]
-          let slot2 = this.slots[i + 1]
-          if (x > slot1.x && x < slot2.x && y > slot1.y && y < slot2.y) {
+        for (let i = 0, len = this.slots.length; i < len; i++) {
+          let slot = this.slots[i]
+          if (x > slot.x - extra && x < slot.x + extra && y > slot.y - extra && y < slot.y + extra) {
             return i
           }
         }
@@ -249,14 +241,14 @@
         }
       }
 
-      moveTo (x, y) {
-        this.el.style.transitionDuration = '1s'
+      moveTo(x, y) {
+        this.el.style.transitionDuration = '500ms'
 
         this.x = x
         this.y = y
       }
 
-      _start (event) {
+      _start(event) {
         this.el.style.zIndex = 2
 
         let touch = event.touches[0]
@@ -267,7 +259,7 @@
       }
 
       _move(event) {
-        this.el.style.transitionDuration = '0s'
+        this.el.style.transitionDuration = '0ms'
 
         let touch = event.touches[0]
         let deltaX = touch.pageX - this._pageX
@@ -282,7 +274,7 @@
         if (this.endEvent) this.endEvent(this)
 
         this.isTransition = true
-        this.el.style.transitionDuration = '1s'
+        this.el.style.transitionDuration = '500ms'
 
         if (this.endX !== null) this.x = this.endX
         else this.x = this.startX
@@ -297,7 +289,6 @@
         this.isTransition = false
       }
     }
-
 
     var box = document.querySelector('.box')
     var wrapper = new Wrapper(box)

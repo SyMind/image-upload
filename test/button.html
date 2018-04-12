@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <title>Document</title>
+  <style>
+    .button {
+      display: inline-block;
+      box-sizing: border-box;
+      position: relative;
+      height: 78px;
+      width: 78px;
+      border: 1px solid #aaa;
+    }
+    .h {
+      display: inline-block;
+      box-sizing: border-box;
+      position: absolute;
+      width: 60%;
+      height: 2px;
+      left: 20%;
+      top: 50%;
+      transform: translateY(-1px);
+      background: #aaa;
+    }
+    .v {
+      display: inline-block;
+      box-sizing: border-box;
+      position: absolute;
+      width: 2px;
+      height: 60%;
+      left: 50%;
+      top: 20%;
+      transform: translateX(-1px);
+      background: #aaa;
+    }
+  </style>
+</head>
+<body>
+  <div class="button">
+    <div class="h"></div>
+    <div class="v"></div>
+  </div>
+</body>
+</html>

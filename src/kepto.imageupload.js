@@ -1,6 +1,6 @@
 (function ($) {
     class ImageUpload {
-        
+
         constructor($root, options) {
             this.$root = $root;
             this.count = 0;
@@ -33,7 +33,7 @@
                             .css('background-image', `url(${compress_data_url})`));
                         if(this.send(file)) {
                           // upload success
-                          
+
                         } else {
                           // upload fail
                         }
@@ -92,7 +92,7 @@
             let now = new Date().getTime(),
                 spend = (now - preTime) / 1000,
                 sect = e.loaded - preSize;
-            console.log(spend, sect);
+                console.log(spend, sect);
           };
           fd.append('image', file);
           xhr.send(fd);
@@ -106,5 +106,5 @@
             return loader;
         }
     })
-    
+
 })(Zepto);
