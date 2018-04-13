@@ -3,6 +3,7 @@ import Element from './element'
 export default class Wrapper {
   constructor(el, options) {
     this.el = el
+    this.options = options
     this.slots = []
     this.lastIdx = -1
     this.elementSize = 78
@@ -19,13 +20,11 @@ export default class Wrapper {
     divEl.style.display = 'inline-block'
     divEl.style.boxSizing = 'border-box'
     divEl.style.overflow = 'hidden'
+    divEl.style.width = divEl.style.height = this.options.elementSize + 'px'
     divEl.style.padding = '5px'
     divEl.style.transition = 'all 1s'
     let x = (this.slots.length % this.column) * this.elementSize
     let y = (this.slots.length % this.column === 0 ? this.row++ : this.row - 1) * this.elementSize
-    // divEl.style.transform = `translate3d(${x}px, ${y}px, 0)`
-    // divEl.style.left = (this.slots.length % this.column) * this.elementSize + 'px'
-    // divEl.style.top = (this.slots.length % this.column === 0 ? this.row++ : this.row - 1) * this.elementSize + 'px'
 
     this.el.appendChild(divEl)
 

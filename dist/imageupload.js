@@ -4,6 +4,56 @@
   (global.ImageUpload = factory());
 }(this, (function () { 'use strict';
 
+  var elementStyle = document.createElement('div').style;
+
+  var vendor = function () {
+    var transformNames = {
+      webkit: 'webkitTransform',
+      Moz: 'MozTransform',
+      O: 'OTransform',
+      ms: 'msTransform',
+      standard: 'transform'
+    };
+
+    for (var key in transformNames) {
+      if (elementStyle[transformNames[key]] !== undefined) {
+        return key;
+      }
+    }
+
+    return false;
+  }();
+
+  function prefixStyle(style) {
+    if (vendor === false) {
+      return false;
+    }
+
+    if (vendor === 'standard') {
+      if (style === 'transitionEnd') {
+        return 'transitionend';
+      }
+      return style;
+    }
+
+    return vendor + style.charAt(0).toUpperCase() + style.substr(1);
+  }
+
+  var transform = prefixStyle('transform');
+
+  var hasTransform = transform !== false;
+  var hasTransition = prefixStyle('transition') in elementStyle;
+
+  var style = {
+    transform: transform,
+    transitionTimingFunction: prefixStyle('transitionTimingFunction'),
+    transitionDuration: prefixStyle('transitionDuration'),
+    transitionProperty: prefixStyle('transitionProperty'),
+    transitionDelay: prefixStyle('transitionDelay'),
+    transformOrigin: prefixStyle('transformOrigin'),
+    transitionEnd: prefixStyle('transitionEnd')
+  };
+
   var classCallCheck = function (instance, Constructor) {
     if (!(instance instanceof Constructor)) {
       throw new TypeError("Cannot call a class as a function");
@@ -57,11 +107,9 @@
 
       Object.defineProperty(this, 'x', {
         get: function get$$1() {
-          // return this.el.offsetLeft
           return this._x;
         },
         set: function set$$1(value) {
-          // this.el.style.left = value + 'px'
           this._x = value;
           this.el.style.transform = 'translate3d(' + this._x + 'px, ' + this._y + 'px, 0)';
         }
@@ -69,11 +117,9 @@
 
       Object.defineProperty(this, 'y', {
         get: function get$$1() {
-          // return this.el.offsetTop
           return this._y;
         },
         set: function set$$1(value) {
-          // this.el.style.top = value + 'px'
           this._y = value;
           this.el.style.transform = 'translate3d(' + this._x + 'px, ' + this._y + 'px, 0)';
         }
@@ -169,6 +215,7 @@
       classCallCheck(this, Wrapper);
 
       this.el = el;
+      this.options = options;
       this.slots = [];
       this.lastIdx = -1;
       this.elementSize = 78;
@@ -187,13 +234,11 @@
         divEl.style.display = 'inline-block';
         divEl.style.boxSizing = 'border-box';
         divEl.style.overflow = 'hidden';
+        divEl.style.width = divEl.style.height = this.options.elementSize + 'px';
         divEl.style.padding = '5px';
         divEl.style.transition = 'all 1s';
         var x = this.slots.length % this.column * this.elementSize;
         var y = (this.slots.length % this.column === 0 ? this.row++ : this.row - 1) * this.elementSize;
-        // divEl.style.transform = `translate3d(${x}px, ${y}px, 0)`
-        // divEl.style.left = (this.slots.length % this.column) * this.elementSize + 'px'
-        // divEl.style.top = (this.slots.length % this.column === 0 ? this.row++ : this.row - 1) * this.elementSize + 'px'
 
         this.el.appendChild(divEl);
 
@@ -309,111 +354,192 @@
     return Wrapper;
   }();
 
+  function extend(target) {
+    for (var _len = arguments.length, rest = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      rest[_key - 1] = arguments[_key];
+    }
+
+    for (var i = 0; i < rest.length; i++) {
+      var source = rest[i];
+      for (var key in source) {
+        target[key] = source[key];
+      }
+    }
+    return target;
+  }
+
+  var DEFAULT_OPTIONS = {
+    elementSize: 78,
+    elementPadding: 5,
+    useTransform: true
+  };
+
+  function initMixin(ImageUpload) {
+    ImageUpload.prototype._init = function (options) {
+      this._handleOptions(options);
+      this._initDOM();
+    };
+
+    ImageUpload.prototype._handleOptions = function (options) {
+      this.options = extend({}, DEFAULT_OPTIONS, options);
+
+      this.translateZ = this.options.HWCompositing ? ' translateZ(0)' : '';
+
+      this.options.useTransition = this.options.useTransition && hasTransition;
+      this.options.useTransform = this.options.useTransform && hasTransform;
+    };
+
+    ImageUpload.prototype._initDOM = function () {
+      var labelEl = this.labelEl = document.createElement('label');
+      labelEl.style.display = 'inline-block';
+      labelEl.style.boxSizing = 'border-box';
+      labelEl.style.position = 'absolute';
+      labelEl.style.width = labelEl.style.height = this.options.elementSize + 'px';
+      labelEl.style.padding = this.options.elementPadding + 'px';
+      labelEl.setAttribute('for', 'imageUploadInputEl');
+
+      var recEl = document.createElement('div');
+      var hEl = document.createElement('div');
+      var vEl = document.createElement('div');
+      recEl.style.boxSizing = 'border-box';
+      recEl.style.height = '100%';
+      recEl.style.width = '100%';
+      recEl.style.border = '1px solid #aaa';
+      hEl.style.display = vEl.style.display = 'inline-block';
+      hEl.style.boxSizing = vEl.style.boxSizing = 'border-box';
+      hEl.style.position = vEl.style.position = 'absolute';
+      hEl.style.width = vEl.style.height = '60%';
+      hEl.style.height = vEl.style.width = '2px';
+      hEl.style.left = vEl.style.top = '20%';
+      hEl.style.top = vEl.style.left = '50%';
+      hEl.style.backgroundColor = vEl.style.backgroundColor = '#aaa';
+      recEl.appendChild(hEl);
+      recEl.appendChild(vEl);
+      labelEl.appendChild(recEl);
+
+      var inputEl = document.createElement('input');
+      inputEl.id = 'imageUploadInputEl';
+      inputEl.style.display = 'none';
+      inputEl.type = 'file';
+
+      var wrapperEl = document.createElement('div');
+      wrapperEl.style.position = 'relative';
+      wrapperEl.style.width = '100%';
+
+      this.el.appendChild(wrapperEl);
+      this.el.appendChild(labelEl);
+      this.el.appendChild(inputEl);
+
+      this.wrapper = new Wrapper(wrapperEl, this.options);
+
+      this.el.style.position = 'relative';
+      this.el.style.minHeight = this.wrapper.elementSize + 'px';
+
+      inputEl.addEventListener('change', this);
+    };
+
+    ImageUpload.prototype.handleEvent = function (event) {
+      switch (event.type) {
+        case 'change':
+          this._change(event);
+          break;
+      }
+    };
+  }
+
+  function eventMixin(ImageUpload) {
+    ImageUpload.prototype._change = function (event) {
+      var _this = this;
+
+      var file = event.srcElement.files[0];
+
+      var reader = new FileReader();
+      reader.readAsDataURL(file);
+
+      reader.onload = function (event) {
+        _this._compress(event.target.result).then(function (dataUrl) {
+          var divEl = document.createElement('div');
+          divEl.style.height = '100%';
+          divEl.style.backgroundImage = 'url(' + dataUrl + ')';
+          divEl.style.backgroundRepeat = 'no-repeat';
+          divEl.style.backgroundSize = 'cover';
+          divEl.style.backgroundPosition = 'center';
+          _this.wrapper.appendElement(divEl);
+
+          _this._adjust();
+        }).catch(function (error) {
+          console.log(error);
+          alert('失败了');
+        });
+
+        _this._adjust();
+      };
+    };
+
+    ImageUpload.prototype._adjust = function () {
+      var last = this.wrapper.slots.length % this.wrapper.column;
+      if (last === 0) {} else {
+        var elementSize = this.options.elementSize;
+        this.labelEl.style.top = (this.wrapper.row - 1) * elementSize + 'px';
+        this.labelEl.style.left = last * elementSize + 'px';
+      }
+    };
+  }
+
+  function compressMixin(ImageUpload) {
+    ImageUpload.prototype._compress = function (dataUrl) {
+      var _this = this;
+
+      return new Promise(function (resolve, reject) {
+        if (!_this._canvas) {
+          _this._canvas = document.createElement('canvas');
+          _this._context = _this._canvas.getContext('2d');
+        }
+
+        var image = new Image();
+
+        image.onload = function () {
+          var width = image.naturalWidth;
+          var height = image.naturalHeight;
+
+          _this._canvas.width = width;
+          _this._canvas.height = height;
+
+          _this._context.clearRect(0, 0, width, height);
+          _this._context.drawImage(image, 0, 0, width, height);
+
+          resolve(_this._canvas.toDataURL('image/jpeg', 0.3));
+        };
+
+        image.onerror = function (error) {
+          reject(error);
+        };
+
+        image.src = dataUrl;
+      });
+    };
+  }
+
+  function warn(msg) {
+    console.error("[ImageUpload warn]: " + msg);
+  }
+
   var ImageUpload = function () {
     function ImageUpload(el, options) {
       classCallCheck(this, ImageUpload);
 
-      this.el = el;
-      this.options = Object.assign({
-        size: '78px',
-        padding: '5px'
-      }, options);
+      this.el = typeof el === 'string' ? document.querySelector(el) : el;
+      if (!this.el) {
+        warn('Can not resolve the DOM.');
+      }
+
+      this._init(options);
     }
 
     createClass(ImageUpload, [{
-      key: 'init',
-      value: function init() {
-        var labelEl = this.labelEl = document.createElement('label');
-        labelEl.style.display = 'inline-block';
-        labelEl.style.boxSizing = 'border-box';
-        labelEl.style.position = 'absolute';
-        labelEl.style.height = this.options.size;
-        labelEl.style.width = this.options.size;
-        labelEl.style.padding = this.options.padding;
-        labelEl.setAttribute('for', 'imageUploadInputEl');
-
-        var recEl = document.createElement('div');
-        var hEl = document.createElement('div');
-        var vEl = document.createElement('div');
-        recEl.style.boxSizing = 'border-box';
-        recEl.style.height = '100%';
-        recEl.style.width = '100%';
-        recEl.style.border = '1px solid #aaa';
-        hEl.style.display = vEl.style.display = 'inline-block';
-        hEl.style.boxSizing = vEl.style.boxSizing = 'border-box';
-        hEl.style.position = vEl.style.position = 'absolute';
-        hEl.style.width = vEl.style.height = '60%';
-        hEl.style.height = vEl.style.width = '2px';
-        hEl.style.left = vEl.style.top = '20%';
-        hEl.style.top = vEl.style.left = '50%';
-        hEl.style.backgroundColor = vEl.style.backgroundColor = '#aaa';
-        recEl.appendChild(hEl);
-        recEl.appendChild(vEl);
-        labelEl.appendChild(recEl);
-
-        var inputEl = document.createElement('input');
-        inputEl.id = 'imageUploadInputEl';
-        inputEl.style.display = 'none';
-        inputEl.type = 'file';
-
-        var wrapperEl = document.createElement('div');
-        wrapperEl.style.position = 'relative';
-        wrapperEl.style.width = '100%';
-
-        this.el.appendChild(wrapperEl);
-        this.el.appendChild(labelEl);
-        this.el.appendChild(inputEl);
-
-        this.wrapper = new Wrapper(wrapperEl);
-
-        this.el.style.position = 'relative';
-        this.el.style.minHeight = this.wrapper.elementSize + 'px';
-
-        inputEl.addEventListener('change', this);
-      }
-    }, {
-      key: 'handleEvent',
-      value: function handleEvent(event) {
-        switch (event.type) {
-          case 'change':
-            this._change(event);
-            break;
-        }
-      }
-    }, {
-      key: '_change',
-      value: function _change(event) {
-        var _this = this;
-
-        var file = event.srcElement.files[0];
-        var reader = new FileReader();
-        reader.readAsDataURL(file);
-        reader.onload = function (event) {
-          _this._compress(event.target.result, function (dataUrl) {
-            var divEl = document.createElement('div');
-            divEl.style.height = '100%';
-            divEl.style.backgroundImage = 'url(' + dataUrl + ')';
-            divEl.style.backgroundRepeat = 'no-repeat';
-            divEl.style.backgroundSize = 'cover';
-            divEl.style.backgroundPosition = 'center';
-            _this.wrapper.appendElement(divEl);
-            _this._adjust();
-          });
-        };
-      }
-    }, {
-      key: '_adjust',
-      value: function _adjust() {
-        var last = this.wrapper.slots.length % this.wrapper.column;
-        if (last === 0) {} else {
-          this.labelEl.style.top = (this.wrapper.row - 1) * this.wrapper.elementSize + 'px';
-          this.labelEl.style.left = last * this.wrapper.elementSize + 'px';
-        }
-      }
-    }, {
       key: '_compress',
       value: function _compress(dataUrl, callback) {
-        var _this2 = this;
+        var _this = this;
 
         if (!this.canvas) {
           this.canvas = document.createElement('canvas');
@@ -423,11 +549,11 @@
         var image = new Image();
         image.src = dataUrl;
         image.onload = function () {
-          _this2.canvas.width = image.naturalWidth;
-          _this2.canvas.height = image.naturalHeight;
-          _this2.context.clearRect(0, 0, image.naturalWidth, image.naturalHeight);
-          _this2.context.drawImage(image, 0, 0, image.naturalWidth, image.naturalHeight);
-          callback(_this2.canvas.toDataURL('image/jpeg', 0.8));
+          _this.canvas.width = image.naturalWidth;
+          _this.canvas.height = image.naturalHeight;
+          _this.context.clearRect(0, 0, image.naturalWidth, image.naturalHeight);
+          _this.context.drawImage(image, 0, 0, image.naturalWidth, image.naturalHeight);
+          callback(_this.canvas.toDataURL('image/jpeg', 0.8));
         };
       }
     }, {
@@ -456,6 +582,11 @@
     }]);
     return ImageUpload;
   }();
+
+
+  initMixin(ImageUpload);
+  eventMixin(ImageUpload);
+  compressMixin(ImageUpload);
 
   return ImageUpload;
 

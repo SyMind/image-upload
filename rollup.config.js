@@ -1,7 +1,7 @@
 const babel = require('rollup-plugin-babel')
 
 export default {
-  input: 'src/imageupload.js',
+  input: 'src/index.js',
   output: {
     file: 'dist/imageupload.js',
     name: 'ImageUpload',

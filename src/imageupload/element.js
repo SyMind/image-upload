@@ -25,11 +25,9 @@ export default class Element {
 
     Object.defineProperty(this, 'x', {
       get () {
-        // return this.el.offsetLeft
         return this._x
       },
       set (value) {
-        // this.el.style.left = value + 'px'
         this._x = value
         this.el.style.transform = `translate3d(${this._x}px, ${this._y}px, 0)`
       }
@@ -37,11 +35,9 @@ export default class Element {
 
     Object.defineProperty(this, 'y', {
       get () {
-        // return this.el.offsetTop
         return this._y
       },
       set (value) {
-        // this.el.style.top = value + 'px'
         this._y = value
         this.el.style.transform = `translate3d(${this._x}px, ${this._y}px, 0)`
       }
