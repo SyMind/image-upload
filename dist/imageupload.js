@@ -52,21 +52,30 @@
         }
       });
 
+      this._x = 0;
+      this._y = 0;
+
       Object.defineProperty(this, 'x', {
         get: function get$$1() {
-          return this.el.offsetLeft;
+          // return this.el.offsetLeft
+          return this._x;
         },
         set: function set$$1(value) {
-          this.el.style.left = value + 'px';
+          // this.el.style.left = value + 'px'
+          this._x = value;
+          this.el.style.transform = 'translate3d(' + this._x + 'px, ' + this._y + 'px, 0)';
         }
       });
 
       Object.defineProperty(this, 'y', {
         get: function get$$1() {
-          return this.el.offsetTop;
+          // return this.el.offsetTop
+          return this._y;
         },
         set: function set$$1(value) {
-          this.el.style.top = value + 'px';
+          // this.el.style.top = value + 'px'
+          this._y = value;
+          this.el.style.transform = 'translate3d(' + this._x + 'px, ' + this._y + 'px, 0)';
         }
       });
 
@@ -156,7 +165,7 @@
   }();
 
   var Wrapper = function () {
-    function Wrapper(el) {
+    function Wrapper(el, options) {
       classCallCheck(this, Wrapper);
 
       this.el = el;
@@ -174,15 +183,24 @@
 
         var divEl = document.createElement('div');
         divEl.appendChild(el);
-        divEl.className = 'item item' + idx;
+        divEl.style.position = 'absolute';
+        divEl.style.display = 'inline-block';
+        divEl.style.boxSizing = 'border-box';
         divEl.style.overflow = 'hidden';
-        divEl.style.left = this.slots.length % this.column * this.elementSize + 'px';
-        divEl.style.top = (this.slots.length % this.column === 0 ? this.row++ : this.row - 1) * this.elementSize + 'px';
+        divEl.style.padding = '5px';
+        divEl.style.transition = 'all 1s';
+        var x = this.slots.length % this.column * this.elementSize;
+        var y = (this.slots.length % this.column === 0 ? this.row++ : this.row - 1) * this.elementSize;
+        // divEl.style.transform = `translate3d(${x}px, ${y}px, 0)`
+        // divEl.style.left = (this.slots.length % this.column) * this.elementSize + 'px'
+        // divEl.style.top = (this.slots.length % this.column === 0 ? this.row++ : this.row - 1) * this.elementSize + 'px'
 
         this.el.appendChild(divEl);
 
         var element = new Element(divEl);
         element.idx = idx;
+        element.x = x;
+        element.y = y;
         element.moveEvent = this._moveEventHandle.bind(this);
         element.endEvent = this._endEventHandle.bind(this);
 
@@ -238,17 +256,30 @@
         var maxX = (this.column - 1) * this.elementSize + extra;
         var minY = -extra;
         var maxY = (this.row - 1) * this.elementSize + extra;
-        if (this.row >= 2) maxY = (this.row - 2) * this.elementSize + extra;
+        if (this.row >= 2) {
+          maxY = (this.row - 2) * this.elementSize + extra;
+        }
 
         if (x < minX && y < minY) {
           return 0;
         } else if (x > maxX && y < minY) {
-          if (this.slots.length >= this.column) return this.column - 1;else return this.slots.length - 1;
+          if (this.slots.length >= this.column) {
+            return this.column - 1;
+          } else {
+            return this.slots.length - 1;
+          }
         } else if (x < minX && y > maxY) {
           return (this.row - 1) * this.column;
         } else if (x > maxX && y > maxY) {
+          if (this.slots.length <= this.column) {
+            return this.slots.length - 1;
+          }
           var idx = this.row * this.column - 1;
-          if (idx >= this.slots.length) return idx - this.column;else return idx;
+          if (idx >= this.slots.length) {
+            return idx - this.column;
+          } else {
+            return idx;
+          }
         } else if (y < minY) {
           var end = this.slots.length >= this.column ? this.column : this.slots.length;
           for (var i = 0; i < end; i++) {
@@ -258,14 +289,10 @@
           }
         } else if (y > maxY) {
           var start = (this.row - 1) * this.column;
-          var _end = this.row * this.column;
+          var _end = this.slots.length > this.column ? this.row * this.column : this.slots.length;
           for (var _i2 = start; _i2 < _end; _i2++) {
-            var slot = this.slots[_i2];
-            var result = _i2;
-            if (!this.slots[_i2]) {
-              slot = this.slots[_i2 - this.column];
-              var _result = _i2 - this.column;
-            }
+            var slot = this.slots[_i2] ? this.slots[_i2] : this.slots[_i2 - this.column];
+            var result = this.slots[_i2] ? _i2 : _i2 - this.column;
             if (x >= slot.x - extra && x < slot.x + extra) {
               return result;
             }
@@ -287,7 +314,10 @@
       classCallCheck(this, ImageUpload);
 
       this.el = el;
-      this.options = Object.assign({}, options);
+      this.options = Object.assign({
+        size: '78px',
+        padding: '5px'
+      }, options);
     }
 
     createClass(ImageUpload, [{
@@ -297,14 +327,18 @@
         labelEl.style.display = 'inline-block';
         labelEl.style.boxSizing = 'border-box';
         labelEl.style.position = 'absolute';
-        labelEl.style.verticalAlign = 'top';
-        labelEl.style.height = '78px';
-        labelEl.style.width = '78px';
-        labelEl.style.border = '1px solid #aaa';
+        labelEl.style.height = this.options.size;
+        labelEl.style.width = this.options.size;
+        labelEl.style.padding = this.options.padding;
         labelEl.setAttribute('for', 'imageUploadInputEl');
 
+        var recEl = document.createElement('div');
         var hEl = document.createElement('div');
         var vEl = document.createElement('div');
+        recEl.style.boxSizing = 'border-box';
+        recEl.style.height = '100%';
+        recEl.style.width = '100%';
+        recEl.style.border = '1px solid #aaa';
         hEl.style.display = vEl.style.display = 'inline-block';
         hEl.style.boxSizing = vEl.style.boxSizing = 'border-box';
         hEl.style.position = vEl.style.position = 'absolute';
@@ -313,8 +347,9 @@
         hEl.style.left = vEl.style.top = '20%';
         hEl.style.top = vEl.style.left = '50%';
         hEl.style.backgroundColor = vEl.style.backgroundColor = '#aaa';
-        labelEl.appendChild(hEl);
-        labelEl.appendChild(vEl);
+        recEl.appendChild(hEl);
+        recEl.appendChild(vEl);
+        labelEl.appendChild(recEl);
 
         var inputEl = document.createElement('input');
         inputEl.id = 'imageUploadInputEl';

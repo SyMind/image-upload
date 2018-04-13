@@ -3,7 +3,10 @@ import Wrapper from './wrapper'
 export default class ImageUpload {
   constructor (el, options) {
     this.el = el
-    this.options = Object.assign({}, options)
+    this.options = Object.assign({
+      size: '78px',
+      padding: '5px'
+    }, options)
   }
 
   init () {
@@ -11,14 +14,18 @@ export default class ImageUpload {
     labelEl.style.display = 'inline-block'
     labelEl.style.boxSizing = 'border-box'
     labelEl.style.position = 'absolute'
-    labelEl.style.verticalAlign = 'top'
-    labelEl.style.height = '78px'
-    labelEl.style.width = '78px'
-    labelEl.style.border = '1px solid #aaa'
+    labelEl.style.height = this.options.size
+    labelEl.style.width = this.options.size
+    labelEl.style.padding = this.options.padding
     labelEl.setAttribute('for', 'imageUploadInputEl')
 
+    let recEl = document.createElement('div')
     let hEl = document.createElement('div')
     let vEl = document.createElement('div')
+    recEl.style.boxSizing = 'border-box'
+    recEl.style.height = '100%'
+    recEl.style.width = '100%'
+    recEl.style.border = '1px solid #aaa'
     hEl.style.display = vEl.style.display = 'inline-block'
     hEl.style.boxSizing = vEl.style.boxSizing = 'border-box'
     hEl.style.position = vEl.style.position = 'absolute'
@@ -27,8 +34,9 @@ export default class ImageUpload {
     hEl.style.left = vEl.style.top = '20%'
     hEl.style.top = vEl.style.left = '50%'
     hEl.style.backgroundColor = vEl.style.backgroundColor = '#aaa'
-    labelEl.appendChild(hEl)
-    labelEl.appendChild(vEl)
+    recEl.appendChild(hEl)
+    recEl.appendChild(vEl)
+    labelEl.appendChild(recEl)
 
     let inputEl = document.createElement('input')
     inputEl.id = 'imageUploadInputEl'

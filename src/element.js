@@ -20,21 +20,30 @@ export default class Element {
       }
     })
 
+    this._x = 0
+    this._y = 0
+
     Object.defineProperty(this, 'x', {
-      get() {
-        return this.el.offsetLeft
+      get () {
+        // return this.el.offsetLeft
+        return this._x
       },
-      set(value) {
-        this.el.style.left = value + 'px'
+      set (value) {
+        // this.el.style.left = value + 'px'
+        this._x = value
+        this.el.style.transform = `translate3d(${this._x}px, ${this._y}px, 0)`
       }
     })
 
     Object.defineProperty(this, 'y', {
-      get: function () {
-        return this.el.offsetTop
+      get () {
+        // return this.el.offsetTop
+        return this._y
       },
-      set: function (value) {
-        this.el.style.top = value + 'px'
+      set (value) {
+        // this.el.style.top = value + 'px'
+        this._y = value
+        this.el.style.transform = `translate3d(${this._x}px, ${this._y}px, 0)`
       }
     })
 
