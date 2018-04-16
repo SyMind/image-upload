@@ -54,6 +54,180 @@
     transitionEnd: prefixStyle('transitionEnd')
   };
 
+  var TOUCH_EVENT = 1;
+  var MOUSE_EVENT = 2;
+
+  var eventType = {
+    touchstart: TOUCH_EVENT,
+    touchmove: TOUCH_EVENT,
+    touchend: TOUCH_EVENT,
+
+    mousedown: MOUSE_EVENT,
+    mousemove: MOUSE_EVENT,
+    mouseup: MOUSE_EVENT,
+    mouseout: MOUSE_EVENT
+  };
+
+  function initMixin(Element) {
+    Element.prototype._init = function () {
+      this.endX = null;
+      this.endY = null;
+
+      this.moveEvent = null;
+      this.endEvent = null;
+
+      this._watchTransition();
+      this._watchCoordinate();
+      this._observeDOMEvents();
+    };
+
+    Element.prototype._watchTransition = function () {
+      var isInTransition = false;
+      Object.defineProperty(this, 'isInTransition', {
+        get: function get() {
+          return isInTransition;
+        },
+        set: function set(value) {
+          isInTransition = value;
+          var pointerEvents = isInTransition ? 'none' : 'auto';
+          this.el.style.pointerEvents = pointerEvents;
+        }
+      });
+    };
+
+    Element.prototype._watchCoordinate = function () {
+      this._x = 0;
+      this._y = 0;
+
+      Object.defineProperty(this, 'x', {
+        get: function get() {
+          return this._x;
+        },
+        set: function set(value) {
+          this._x = value;
+          this.el.style.transform = 'translate3d(' + this._x + 'px, ' + this._y + 'px, 0)';
+        }
+      });
+
+      Object.defineProperty(this, 'y', {
+        get: function get() {
+          return this._y;
+        },
+        set: function set(value) {
+          this._y = value;
+          this.el.style.transform = 'translate3d(' + this._x + 'px, ' + this._y + 'px, 0)';
+        }
+      });
+    };
+
+    Element.prototype._observeDOMEvents = function () {
+      this.el.addEventListener('touchstart', this);
+      this.el.addEventListener('mousedown', this);
+
+      this.el.addEventListener('touchmove', this);
+      this.el.addEventListener('mousemove', this);
+
+      this.el.addEventListener('touchend', this);
+      this.el.addEventListener('mouseup', this);
+      this.el.addEventListener('touchcancel', this);
+      this.el.addEventListener('mousecancel', this);
+      this.el.addEventListener('mouseout', this);
+
+      this.el.addEventListener(style.transitionEnd, this);
+    };
+
+    Element.prototype.handleEvent = function (event) {
+      switch (event.type) {
+        case 'touchstart':
+        case 'mousedown':
+          this._start(event);
+          break;
+        case 'touchmove':
+        case 'mousemove':
+          this._move(event);
+          break;
+        case 'touchend':
+        case 'mouseup':
+        case 'touchcancel':
+        case 'mousecancel':
+        case 'mouseout':
+          this._end(event);
+          break;
+        case 'transitionEnd':
+        case 'webkitTransitionEnd':
+        case 'oTransitionEnd':
+        case 'MSTransitionEnd':
+          this._transitionEnd(event);
+          break;
+      }
+    };
+  }
+
+  function coreMixin(Element) {
+    Element.prototype.moveTo = function (x, y) {
+      this.el.style.transitionDuration = this.options.transitionDuration + 'ms';
+      this.x = x;
+      this.y = y;
+    };
+
+    Element.prototype._start = function (event) {
+      var _eventType = eventType[event.type];
+      if (_eventType !== TOUCH_EVENT && event.button !== 0) {
+        return;
+      }
+      this.initiated = _eventType;
+      console.log(event.type);
+
+      this.el.style.transitionDuration = '0ms';
+      this.el.style.zIndex = 2;
+
+      var touch = event.touches ? event.touches[0] : event;
+      this.startX = parseInt(this.el.offsetLeft);
+      this.startY = parseInt(this.el.offsetTop);
+      this._pageX = touch.pageX;
+      this._pageY = touch.pageY;
+    };
+
+    Element.prototype._move = function (event) {
+      if (eventType[event.type] !== this.initiated) {
+        return;
+      }
+      console.log(event.type);
+
+      var touch = event.touches ? event.touches[0] : event;
+      var deltaX = touch.pageX - this._pageX;
+      var deltaY = touch.pageY - this._pageY;
+      this.x = this.startX + deltaX;
+      this.y = this.startY + deltaY;
+
+      if (this.moveEvent) this.moveEvent(this);
+    };
+
+    Element.prototype._end = function (event) {
+      if (eventType[event.type] !== this.initiated) {
+        return;
+      }
+      console.log(event.type);
+      this.initiated = false;
+
+      if (this.endEvent) this.endEvent(this);
+
+      this.isInTransition = true;
+      this.el.style.transitionDuration = this.options.transitionDuration + 'ms';
+
+      if (this.endX !== null) this.x = this.endX;else this.x = this.startX;
+      if (this.endY !== null) this.y = this.endY;else this.y = this.startY;
+
+      this.endX = null;
+      this.endY = null;
+    };
+
+    Element.prototype._transitionEnd = function (event) {
+      console.log(event.type);
+      this.isInTransition = false;
+    };
+  }
+
   var classCallCheck = function (instance, Constructor) {
     if (!(instance instanceof Constructor)) {
       throw new TypeError("Cannot call a class as a function");
@@ -78,137 +252,18 @@
     };
   }();
 
-  var Element = function () {
-    function Element(el) {
-      classCallCheck(this, Element);
+  var Element = function Element(el, options) {
+    classCallCheck(this, Element);
 
-      this.el = el;
+    this.el = el;
+    this.options = options;
 
-      this.endX = null;
-      this.endY = null;
+    this._init();
+  };
 
-      this.moveEvent = null;
-      this.endEvent = null;
 
-      var isTransition = false;
-      Object.defineProperty(this, 'isTransition', {
-        get: function get$$1() {
-          return isTransition;
-        },
-        set: function set$$1(value) {
-          isTransition = value;
-          var pointerEvents = isTransition ? 'none' : 'auto';
-          this.el.style.pointerEvents = pointerEvents;
-        }
-      });
-
-      this._x = 0;
-      this._y = 0;
-
-      Object.defineProperty(this, 'x', {
-        get: function get$$1() {
-          return this._x;
-        },
-        set: function set$$1(value) {
-          this._x = value;
-          this.el.style.transform = 'translate3d(' + this._x + 'px, ' + this._y + 'px, 0)';
-        }
-      });
-
-      Object.defineProperty(this, 'y', {
-        get: function get$$1() {
-          return this._y;
-        },
-        set: function set$$1(value) {
-          this._y = value;
-          this.el.style.transform = 'translate3d(' + this._x + 'px, ' + this._y + 'px, 0)';
-        }
-      });
-
-      el.addEventListener('touchstart', this);
-      el.addEventListener('touchmove', this);
-      el.addEventListener('touchend', this);
-      el.addEventListener('transitionEnd', this);
-      el.addEventListener('webkitTransitionEnd', this);
-      el.addEventListener('oTransitionEnd', this);
-      el.addEventListener('MSTransitionEnd', this);
-    }
-
-    createClass(Element, [{
-      key: 'handleEvent',
-      value: function handleEvent(e) {
-        switch (e.type) {
-          case 'touchstart':
-            this._start(e);
-            break;
-          case 'touchmove':
-            this._move(e);
-            break;
-          case 'touchend':
-            this._end(e);
-            break;
-          case 'transitionEnd':
-          case 'webkitTransitionEnd':
-          case 'oTransitionEnd':
-          case 'MSTransitionEnd':
-            this._transitionEnd(e);
-            break;
-        }
-      }
-    }, {
-      key: 'moveTo',
-      value: function moveTo(x, y) {
-        this.el.style.transitionDuration = '500ms';
-
-        this.x = x;
-        this.y = y;
-      }
-    }, {
-      key: '_start',
-      value: function _start(event) {
-        this.el.style.zIndex = 2;
-
-        var touch = event.touches[0];
-        this.startX = parseInt(this.el.offsetLeft);
-        this.startY = parseInt(this.el.offsetTop);
-        this._pageX = touch.pageX;
-        this._pageY = touch.pageY;
-      }
-    }, {
-      key: '_move',
-      value: function _move(event) {
-        this.el.style.transitionDuration = '0ms';
-
-        var touch = event.touches[0];
-        var deltaX = touch.pageX - this._pageX;
-        var deltaY = touch.pageY - this._pageY;
-        this.x = this.startX + deltaX;
-        this.y = this.startY + deltaY;
-
-        if (this.moveEvent) this.moveEvent(this);
-      }
-    }, {
-      key: '_end',
-      value: function _end(event) {
-        if (this.endEvent) this.endEvent(this);
-
-        this.isTransition = true;
-        this.el.style.transitionDuration = '500ms';
-
-        if (this.endX !== null) this.x = this.endX;else this.x = this.startX;
-        if (this.endY !== null) this.y = this.endY;else this.y = this.startY;
-
-        this.endX = null;
-        this.endY = null;
-      }
-    }, {
-      key: '_transitionEnd',
-      value: function _transitionEnd(event) {
-        this.isTransition = false;
-      }
-    }]);
-    return Element;
-  }();
+  initMixin(Element);
+  coreMixin(Element);
 
   var Wrapper = function () {
     function Wrapper(el, options) {
@@ -242,7 +297,7 @@
 
         this.el.appendChild(divEl);
 
-        var element = new Element(divEl);
+        var element = new Element(divEl, this.options);
         element.idx = idx;
         element.x = x;
         element.y = y;
@@ -371,10 +426,12 @@
   var DEFAULT_OPTIONS = {
     elementSize: 78,
     elementPadding: 5,
-    useTransform: true
+    transitionDuration: 200,
+    useTransform: true,
+    api: '/api/upload'
   };
 
-  function initMixin(ImageUpload) {
+  function initMixin$1(ImageUpload) {
     ImageUpload.prototype._init = function (options) {
       this._handleOptions(options);
       this._initDOM();
@@ -584,7 +641,7 @@
   }();
 
 
-  initMixin(ImageUpload);
+  initMixin$1(ImageUpload);
   eventMixin(ImageUpload);
   compressMixin(ImageUpload);
 

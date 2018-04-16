@@ -9,7 +9,9 @@ import { extend } from '../util/lang'
 const DEFAULT_OPTIONS = {
   elementSize: 78,
   elementPadding: 5,
-  useTransform: true
+  transitionDuration: 200,
+  useTransform: true,
+  api: '/api/upload'
 }
 
 export function initMixin (ImageUpload) {

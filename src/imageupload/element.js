@@ -1,6 +1,7 @@
 export default class Element {
-  constructor(el) {
+  constructor(el, options) {
     this.el = el
+    this.options = options
 
     this.endX = null
     this.endY = null
@@ -73,13 +74,14 @@ export default class Element {
   }
 
   moveTo (x, y) {
-    this.el.style.transitionDuration = '500ms'
+    this.el.style.transitionDuration = this.options.transitionDuration + 'ms'
 
     this.x = x
     this.y = y
   }
 
   _start (event) {
+    this.el.style.transitionDuration = '0ms'
     this.el.style.zIndex = 2
 
     let touch = event.touches[0]
@@ -90,8 +92,6 @@ export default class Element {
   }
 
   _move(event) {
-    this.el.style.transitionDuration = '0ms'
-
     let touch = event.touches[0]
     let deltaX = touch.pageX - this._pageX
     let deltaY = touch.pageY - this._pageY
@@ -105,7 +105,7 @@ export default class Element {
     if (this.endEvent) this.endEvent(this)
 
     this.isTransition = true
-    this.el.style.transitionDuration = '500ms'
+    this.el.style.transitionDuration = this.options.transitionDuration + 'ms'
 
     if (this.endX !== null) this.x = this.endX
     else this.x = this.startX

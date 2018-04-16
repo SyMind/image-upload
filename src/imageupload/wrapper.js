@@ -1,4 +1,4 @@
-import Element from './element'
+import Element from '../element/index'
 
 export default class Wrapper {
   constructor(el, options) {
@@ -28,7 +28,7 @@ export default class Wrapper {
 
     this.el.appendChild(divEl)
 
-    let element = new Element(divEl)
+    let element = new Element(divEl, this.options)
     element.idx = idx
     element.x = x
     element.y = y
