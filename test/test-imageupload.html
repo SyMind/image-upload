@@ -40,14 +40,33 @@
     .item4 {
       background: azure;
     }
+
+    .header {
+      height: 36px;
+    }
+    .header .send {
+      float: right;
+      border: 0;
+      outline: none;
+      font-size: 14px;
+      color: #1AAD19;
+      background: #fff;
+    }
   </style>
 </head>
 <body>
+  <header class="header">
+    <button class="send">发表</button>
+  </header>
   <div id="imageupload"></div>
-
   <script>
     let imageUploadEl = document.querySelector('#imageupload')
-    new ImageUpload(imageUploadEl)
+    let imageUpload = new ImageUpload(imageUploadEl)
+
+    let button = document.querySelector('.send')
+    button.onclick = function () {
+      imageUpload.send()
+    }
   </script>
 </body>
 </html>

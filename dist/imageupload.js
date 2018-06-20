@@ -77,12 +77,16 @@
       this.endEvent = null;
 
       this._watchTransition();
-      this._watchCoordinate();
       this._observeDOMEvents();
     };
 
     Element.prototype._watchTransition = function () {
       var isInTransition = false;
+      var x = 0;
+      var y = 0;
+      var scaleX = 1;
+      var scaleY = 1;
+
       Object.defineProperty(this, 'isInTransition', {
         get: function get() {
           return isInTransition;
@@ -93,29 +97,44 @@
           this.el.style.pointerEvents = pointerEvents;
         }
       });
-    };
-
-    Element.prototype._watchCoordinate = function () {
-      this._x = 0;
-      this._y = 0;
 
       Object.defineProperty(this, 'x', {
         get: function get() {
-          return this._x;
+          return x;
         },
         set: function set(value) {
-          this._x = value;
-          this.el.style.transform = 'translate3d(' + this._x + 'px, ' + this._y + 'px, 0)';
+          x = value;
+          this.el.style.transform = 'translate3d(' + x + 'px, ' + y + 'px, 0) scale(' + scaleX + ', ' + scaleY + ')';
         }
       });
 
       Object.defineProperty(this, 'y', {
         get: function get() {
-          return this._y;
+          return y;
         },
         set: function set(value) {
-          this._y = value;
-          this.el.style.transform = 'translate3d(' + this._x + 'px, ' + this._y + 'px, 0)';
+          y = value;
+          this.el.style.transform = 'translate3d(' + x + 'px, ' + y + 'px, 0) scale(' + scaleX + ', ' + scaleY + ')';
+        }
+      });
+
+      Object.defineProperty(this, 'scaleX', {
+        get: function get() {
+          return scaleX;
+        },
+        set: function set(value) {
+          scaleX = value;
+          this.el.style.transform = 'translate3d(' + x + 'px, ' + y + 'px, 0) scale(' + scaleX + ', ' + scaleY + ')';
+        }
+      });
+
+      Object.defineProperty(this, 'scaleY', {
+        get: function get() {
+          return scaleY;
+        },
+        set: function set(value) {
+          scaleY = value;
+          this.el.style.transform = 'translate3d(' + x + 'px, ' + y + 'px, 0) scale(' + scaleX + ', ' + scaleY + ')';
         }
       });
     };
@@ -134,6 +153,8 @@
       this.el.addEventListener('mouseout', this);
 
       this.el.addEventListener(style.transitionEnd, this);
+
+      this.el.addEventListener('dragstart', this);
     };
 
     Element.prototype.handleEvent = function (event) {
@@ -159,8 +180,15 @@
         case 'MSTransitionEnd':
           this._transitionEnd(event);
           break;
+        case 'dragstart':
+          event.preventDefault();
+          break;
       }
     };
+  }
+
+  function warn(msg) {
+    console.error("[ImageUpload warn]: " + msg);
   }
 
   function coreMixin(Element) {
@@ -171,28 +199,40 @@
     };
 
     Element.prototype._start = function (event) {
+      var _this = this;
+
+      event.stopPropagation();
+
+      clearTimeout(this.timer);
+      this.flag = false;
+      this.timer = setTimeout(function () {
+        _this.scaleX = 1.2;
+        _this.scaleY = 1.2;
+        _this.flag = true;
+      }, 1000);
+
       var _eventType = eventType[event.type];
       if (_eventType !== TOUCH_EVENT && event.button !== 0) {
         return;
       }
       this.initiated = _eventType;
-      console.log(event.type);
 
       this.el.style.transitionDuration = '0ms';
       this.el.style.zIndex = 2;
 
       var touch = event.touches ? event.touches[0] : event;
-      this.startX = parseInt(this.el.offsetLeft);
-      this.startY = parseInt(this.el.offsetTop);
+      this.startX = parseInt(this.x);
+      this.startY = parseInt(this.y);
       this._pageX = touch.pageX;
       this._pageY = touch.pageY;
     };
 
     Element.prototype._move = function (event) {
-      if (eventType[event.type] !== this.initiated) {
+      event.stopPropagation();
+
+      if (eventType[event.type] !== this.initiated || !this.flag) {
         return;
       }
-      console.log(event.type);
 
       var touch = event.touches ? event.touches[0] : event;
       var deltaX = touch.pageX - this._pageX;
@@ -200,30 +240,47 @@
       this.x = this.startX + deltaX;
       this.y = this.startY + deltaY;
 
-      if (this.moveEvent) this.moveEvent(this);
+      if (this.moveEvent) {
+        this.moveEvent(this);
+      }
     };
 
     Element.prototype._end = function (event) {
+      event.stopPropagation();
+
+      clearTimeout(this.timer);
+
       if (eventType[event.type] !== this.initiated) {
         return;
       }
-      console.log(event.type);
-      this.initiated = false;
+      this.initiated = null;
 
-      if (this.endEvent) this.endEvent(this);
+      if (this.endEvent) {
+        this.endEvent(this);
+      }
 
       this.isInTransition = true;
       this.el.style.transitionDuration = this.options.transitionDuration + 'ms';
 
-      if (this.endX !== null) this.x = this.endX;else this.x = this.startX;
-      if (this.endY !== null) this.y = this.endY;else this.y = this.startY;
+      if (this.endX !== null) {
+        this.x = this.endX;
+      } else {
+        this.x = this.startX;
+      }
+      if (this.endY !== null) {
+        this.y = this.endY;
+      } else {
+        this.y = this.startY;
+      }
 
       this.endX = null;
       this.endY = null;
+      this.scaleX = 1;
+      this.scaleY = 1;
+      this.el.style.zIndex = 0;
     };
 
     Element.prototype._transitionEnd = function (event) {
-      console.log(event.type);
       this.isInTransition = false;
     };
   }
@@ -283,8 +340,20 @@
       value: function appendElement(el) {
         var idx = ++this.lastIdx;
 
+        var maskEl = document.createElement('div');
+        maskEl.style.position = 'absolute';
+        maskEl.style.display = 'inline-block';
+        maskEl.style.boxSizing = 'border-box';
+        maskEl.style.top = '5px';
+        maskEl.style.left = '5px';
+        maskEl.style.height = this.options.elementSize - 5 * 2 + 'px';
+        maskEl.style.width = this.options.elementSize - 5 * 2 + 'px';
+        maskEl.style.padding = '5px';
+        maskEl.style.backgroundColor = 'rgba(0,0,0,.5)';
+
         var divEl = document.createElement('div');
         divEl.appendChild(el);
+        divEl.appendChild(maskEl);
         divEl.style.position = 'absolute';
         divEl.style.display = 'inline-block';
         divEl.style.boxSizing = 'border-box';
@@ -337,7 +406,6 @@
               _current.el = next.el;
             }
           }
-
           source.idx = idx;
           this.slots[idx].el = source;
         }
@@ -435,6 +503,14 @@
     ImageUpload.prototype._init = function (options) {
       this._handleOptions(options);
       this._initDOM();
+      // this.files = []
+    };
+
+    ImageUpload.prototype.send = function () {
+      console.log(this.wrapper.slots);
+      console.log(this.inputEl.files);
+      // let formData = new FormData()
+      // formData.append("file" , picFileList[i])
     };
 
     ImageUpload.prototype._handleOptions = function (options) {
@@ -478,6 +554,7 @@
       inputEl.id = 'imageUploadInputEl';
       inputEl.style.display = 'none';
       inputEl.type = 'file';
+      this.inputEl = inputEl;
 
       var wrapperEl = document.createElement('div');
       wrapperEl.style.position = 'relative';
@@ -509,31 +586,48 @@
       var _this = this;
 
       var file = event.srcElement.files[0];
+      // this.files.push(file)
 
       var reader = new FileReader();
       reader.readAsDataURL(file);
+
+      reader.onloadstart = function (e) {
+        console.log("开始读取....");
+      };
+      reader.onprogress = function (e) {
+        console.log("正在读取中....");
+      };
+      reader.onabort = function (e) {
+        console.log("中断读取....");
+      };
+      reader.onerror = function (e) {
+        console.log("读取异常....");
+      };
 
       reader.onload = function (event) {
         _this._compress(event.target.result).then(function (dataUrl) {
           var divEl = document.createElement('div');
           divEl.style.height = '100%';
-          divEl.style.backgroundImage = 'url(' + dataUrl + ')';
+          divEl.style.backgroundImage = "url(" + dataUrl + ")";
           divEl.style.backgroundRepeat = 'no-repeat';
           divEl.style.backgroundSize = 'cover';
           divEl.style.backgroundPosition = 'center';
           _this.wrapper.appendElement(divEl);
 
-          _this._adjust();
+          _this._layout();
+          _this._send();
         }).catch(function (error) {
           console.log(error);
           alert('失败了');
         });
-
-        _this._adjust();
       };
     };
 
-    ImageUpload.prototype._adjust = function () {
+    ImageUpload.prototype._send = function (file) {
+      var xhr = new XMLHttpRequest();
+    };
+
+    ImageUpload.prototype._layout = function () {
       var last = this.wrapper.slots.length % this.wrapper.column;
       if (last === 0) {} else {
         var elementSize = this.options.elementSize;
@@ -575,10 +669,6 @@
         image.src = dataUrl;
       });
     };
-  }
-
-  function warn(msg) {
-    console.error("[ImageUpload warn]: " + msg);
   }
 
   var ImageUpload = function () {

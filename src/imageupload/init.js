@@ -18,6 +18,14 @@ export function initMixin (ImageUpload) {
   ImageUpload.prototype._init = function (options) {
     this._handleOptions(options)
     this._initDOM()
+    // this.files = []
+  }
+
+  ImageUpload.prototype.send = function () {
+    console.log(this.wrapper.slots)
+    console.log(this.inputEl.files)
+    // let formData = new FormData()
+    // formData.append("file" , picFileList[i])
   }
 
   ImageUpload.prototype._handleOptions = function (options) {
@@ -61,6 +69,7 @@ export function initMixin (ImageUpload) {
     inputEl.id = 'imageUploadInputEl'
     inputEl.style.display = 'none'
     inputEl.type = 'file'
+    this.inputEl = inputEl
 
     let wrapperEl = document.createElement('div')
     wrapperEl.style.position = 'relative'

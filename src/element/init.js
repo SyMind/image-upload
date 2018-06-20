@@ -9,45 +9,64 @@ export function initMixin (Element) {
     this.endEvent = null
 
     this._watchTransition()
-    this._watchCoordinate()
     this._observeDOMEvents()
   }
 
   Element.prototype._watchTransition = function () {
     let isInTransition = false
+    let x = 0
+    let y = 0
+    let scaleX = 1
+    let scaleY = 1
+
     Object.defineProperty(this, 'isInTransition', {
-      get() {
+      get () {
         return isInTransition
       },
-      set(value) {
+      set (value) {
         isInTransition = value
         let pointerEvents = isInTransition ? 'none' : 'auto'
         this.el.style.pointerEvents = pointerEvents
       }
     })
-  }
-
-  Element.prototype._watchCoordinate = function () {
-    this._x = 0
-    this._y = 0
 
     Object.defineProperty(this, 'x', {
       get () {
-        return this._x
+        return x
       },
       set (value) {
-        this._x = value
-        this.el.style.transform = `translate3d(${this._x}px, ${this._y}px, 0)`
+        x = value
+        this.el.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scaleX}, ${scaleY})`
       }
     })
 
     Object.defineProperty(this, 'y', {
       get () {
-        return this._y
+        return y
       },
       set (value) {
-        this._y = value
-        this.el.style.transform = `translate3d(${this._x}px, ${this._y}px, 0)`
+        y = value
+        this.el.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scaleX}, ${scaleY})`
+      }
+    })
+
+    Object.defineProperty(this, 'scaleX', {
+      get () {
+        return scaleX
+      },
+      set (value) {
+        scaleX = value
+        this.el.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scaleX}, ${scaleY})`
+      }
+    })
+
+    Object.defineProperty(this, 'scaleY', {
+      get () {
+        return scaleY
+      },
+      set (value) {
+        scaleY = value
+        this.el.style.transform = `translate3d(${x}px, ${y}px, 0) scale(${scaleX}, ${scaleY})`
       }
     })
   }
@@ -66,6 +85,8 @@ export function initMixin (Element) {
     this.el.addEventListener('mouseout', this)
 
     this.el.addEventListener(style.transitionEnd, this)
+
+    this.el.addEventListener('dragstart', this)
   }
 
   Element.prototype.handleEvent = function (event) {
@@ -90,6 +111,9 @@ export function initMixin (Element) {
       case 'oTransitionEnd':
       case 'MSTransitionEnd':
         this._transitionEnd(event)
+        break
+      case 'dragstart':
+        event.preventDefault()
         break
     }
   }

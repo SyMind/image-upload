@@ -14,8 +14,20 @@ export default class Wrapper {
   appendElement (el) {
     let idx = ++this.lastIdx
 
+    let maskEl = document.createElement('div')
+    maskEl.style.position = 'absolute'
+    maskEl.style.display = 'inline-block'
+    maskEl.style.boxSizing = 'border-box'
+    maskEl.style.top = '5px'
+    maskEl.style.left = '5px'
+    maskEl.style.height = this.options.elementSize - 5 * 2 + 'px'
+    maskEl.style.width = this.options.elementSize - 5 * 2 + 'px'
+    maskEl.style.padding = '5px'
+    maskEl.style.backgroundColor = 'rgba(0,0,0,.5)'
+
     let divEl = document.createElement('div')
     divEl.appendChild(el)
+    divEl.appendChild(maskEl)
     divEl.style.position = 'absolute'
     divEl.style.display = 'inline-block'
     divEl.style.boxSizing = 'border-box'
@@ -67,7 +79,6 @@ export default class Wrapper {
             current.el = next.el
           }
         }
-
         source.idx = idx
         this.slots[idx].el = source
     }
