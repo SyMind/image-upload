@@ -17,10 +17,10 @@ export function coreMixin (Element) {
     clearTimeout(this.timer)
     this.flag = false
     this.timer = setTimeout(() => {
-      this.scaleX = 1.2
-      this.scaleY = 1.2
+      this.scaleX = 1.1
+      this.scaleY = 1.1
       this.flag = true
-    }, 1000)
+    }, this.options.dragDelay)
 
     let _eventType = eventType[event.type]
     if (_eventType !== TOUCH_EVENT && event.button !== 0) {
@@ -88,7 +88,11 @@ export function coreMixin (Element) {
     this.endY = null
     this.scaleX = 1
     this.scaleY = 1
-    this.el.style.zIndex = 0
+    this.el.style.zIndex = 1
+
+    if (this.moveEvent) {
+      this.moveEvent(this)
+    }
   }
 
   Element.prototype._transitionEnd = function (event) {

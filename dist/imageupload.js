@@ -191,6 +191,10 @@
     console.error("[ImageUpload warn]: " + msg);
   }
 
+  function info(msg) {
+    console.info("[ImageUpload info]: " + msg);
+  }
+
   function coreMixin(Element) {
     Element.prototype.moveTo = function (x, y) {
       this.el.style.transitionDuration = this.options.transitionDuration + 'ms';
@@ -206,10 +210,10 @@
       clearTimeout(this.timer);
       this.flag = false;
       this.timer = setTimeout(function () {
-        _this.scaleX = 1.2;
-        _this.scaleY = 1.2;
+        _this.scaleX = 1.1;
+        _this.scaleY = 1.1;
         _this.flag = true;
-      }, 1000);
+      }, this.options.dragDelay);
 
       var _eventType = eventType[event.type];
       if (_eventType !== TOUCH_EVENT && event.button !== 0) {
@@ -277,7 +281,11 @@
       this.endY = null;
       this.scaleX = 1;
       this.scaleY = 1;
-      this.el.style.zIndex = 0;
+      this.el.style.zIndex = 1;
+
+      if (this.moveEvent) {
+        this.moveEvent(this);
+      }
     };
 
     Element.prototype._transitionEnd = function (event) {
@@ -328,16 +336,22 @@
 
       this.el = el;
       this.options = options;
+
       this.slots = [];
       this.lastIdx = -1;
-      this.elementSize = 78;
-      this.column = Math.floor(this.el.offsetWidth / this.elementSize);
+      this.column = Math.floor(this.el.offsetWidth / this.options.elementSize);
       this.row = 0;
     }
 
     createClass(Wrapper, [{
+      key: 'removeElement',
+      value: function removeElement() {
+        console.log(this.el.children);
+      }
+    }, {
       key: 'appendElement',
-      value: function appendElement(el) {
+      value: function appendElement(el, id) {
+        var elementSize = this.options.elementSize;
         var idx = ++this.lastIdx;
 
         var maskEl = document.createElement('div');
@@ -346,23 +360,24 @@
         maskEl.style.boxSizing = 'border-box';
         maskEl.style.top = '5px';
         maskEl.style.left = '5px';
-        maskEl.style.height = this.options.elementSize - 5 * 2 + 'px';
-        maskEl.style.width = this.options.elementSize - 5 * 2 + 'px';
+        maskEl.style.height = elementSize - 5 * 2 + 'px';
+        maskEl.style.width = elementSize - 5 * 2 + 'px';
         maskEl.style.padding = '5px';
         maskEl.style.backgroundColor = 'rgba(0,0,0,.5)';
 
         var divEl = document.createElement('div');
         divEl.appendChild(el);
-        divEl.appendChild(maskEl);
+        // divEl.appendChild(maskEl)
         divEl.style.position = 'absolute';
         divEl.style.display = 'inline-block';
         divEl.style.boxSizing = 'border-box';
         divEl.style.overflow = 'hidden';
-        divEl.style.width = divEl.style.height = this.options.elementSize + 'px';
+        divEl.style.width = divEl.style.height = elementSize + 'px';
         divEl.style.padding = '5px';
         divEl.style.transition = 'all 1s';
-        var x = this.slots.length % this.column * this.elementSize;
-        var y = (this.slots.length % this.column === 0 ? this.row++ : this.row - 1) * this.elementSize;
+        divEl.dataset.id = id;
+        var x = this.slots.length % this.column * elementSize;
+        var y = (this.slots.length % this.column === 0 ? this.row++ : this.row - 1) * elementSize;
 
         this.el.appendChild(divEl);
 
@@ -380,20 +395,24 @@
         });
 
         this.row = Math.ceil(this.slots.length / this.column);
-        this.el.style.height = this.row * this.elementSize + 'px';
+        this.el.style.height = this.row * elementSize + 'px';
       }
     }, {
       key: '_moveEventHandle',
       value: function _moveEventHandle(source) {
+        if (typeof this.options.moveEvent === 'function') {
+          this.options.moveEvent();
+        }
+
         var idx = this._judge(source.x, source.y);
-        if (typeof idx === 'number' && idx !== source.idx) {
+        if (idx !== source.idx) {
           if (idx < source.idx) {
             for (var i = source.idx; i > idx; i--) {
               var current = this.slots[i];
               var last = this.slots[i - 1];
               last.el.x = current.x;
               last.el.y = current.y;
-              last.el.idx = current.el.idx;
+              last.el.idx = i;
               current.el = last.el;
             }
           } else {
@@ -402,10 +421,11 @@
               var next = this.slots[_i + 1];
               next.el.x = _current.x;
               next.el.y = _current.y;
-              next.el.idx = _current.el.idx;
+              next.el.idx = _i;
               _current.el = next.el;
             }
           }
+
           source.idx = idx;
           this.slots[idx].el = source;
         }
@@ -419,25 +439,23 @@
     }, {
       key: '_judge',
       value: function _judge(x, y) {
-        var extra = 0.5 * this.elementSize;
+        var elementSize = this.options.elementSize;
+        var extra = 0.5 * elementSize;
         var minX = -extra;
-        var maxX = (this.column - 1) * this.elementSize + extra;
+        var maxX = this.slots.length < this.column ? (this.slots.length - 1) * elementSize + extra : (this.column - 1) * elementSize + extra;
         var minY = -extra;
-        var maxY = (this.row - 1) * this.elementSize + extra;
-        if (this.row >= 2) {
-          maxY = (this.row - 2) * this.elementSize + extra;
-        }
+        var maxY = this.row >= 2 ? maxY = (this.row - 2) * elementSize + extra : (this.row - 1) * elementSize + extra;
 
         if (x < minX && y < minY) {
           return 0;
+        } else if (x < minX && y > maxY) {
+          return (this.row - 1) * this.column;
         } else if (x > maxX && y < minY) {
           if (this.slots.length >= this.column) {
             return this.column - 1;
           } else {
             return this.slots.length - 1;
           }
-        } else if (x < minX && y > maxY) {
-          return (this.row - 1) * this.column;
         } else if (x > maxX && y > maxY) {
           if (this.slots.length <= this.column) {
             return this.slots.length - 1;
@@ -448,33 +466,92 @@
           } else {
             return idx;
           }
+        } else if (x > maxX) {
+          for (var i = this.column - 1; i < this.slots.length; i += this.column) {
+            var slot = this.slots[i];
+            if (y >= slot.y - extra && y < slot.y + extra) {
+              return i;
+            }
+          }
+          return this.slots.length - 1;
+        } else if (x < minX) {
+          for (var _i2 = 0; _i2 < this.slots.length; _i2 += this.column) {
+            var _slot = this.slots[_i2];
+            if (y >= _slot.y - extra && y < _slot.y + extra) {
+              return _i2;
+            }
+          }
+          return 0;
         } else if (y < minY) {
           var end = this.slots.length >= this.column ? this.column : this.slots.length;
-          for (var i = 0; i < end; i++) {
-            if (x >= this.slots[i].x - extra && x < this.slots[i].x + extra) {
-              return i;
+          for (var _i3 = 0; _i3 < end; _i3++) {
+            if (x >= this.slots[_i3].x - extra && x < this.slots[_i3].x + extra) {
+              return _i3;
             }
           }
         } else if (y > maxY) {
           var start = (this.row - 1) * this.column;
           var _end = this.slots.length > this.column ? this.row * this.column : this.slots.length;
-          for (var _i2 = start; _i2 < _end; _i2++) {
-            var slot = this.slots[_i2] ? this.slots[_i2] : this.slots[_i2 - this.column];
-            var result = this.slots[_i2] ? _i2 : _i2 - this.column;
-            if (x >= slot.x - extra && x < slot.x + extra) {
+          for (var _i4 = start; _i4 < _end; _i4++) {
+            var _slot2 = this.slots[_i4] ? this.slots[_i4] : this.slots[_i4 - this.column];
+            var result = this.slots[_i4] ? _i4 : _i4 - this.column;
+            if (x >= _slot2.x - extra && x < _slot2.x + extra) {
               return result;
             }
           }
         }
-        for (var _i3 = 0, len = this.slots.length; _i3 < len; _i3++) {
-          var _slot = this.slots[_i3];
-          if (x > _slot.x - extra && x < _slot.x + extra && y > _slot.y - extra && y < _slot.y + extra) {
-            return _i3;
+        for (var _i5 = 0, len = this.slots.length; _i5 < len; _i5++) {
+          var _slot3 = this.slots[_i5];
+          if (x > _slot3.x - extra && x < _slot3.x + extra && y > _slot3.y - extra && y < _slot3.y + extra) {
+            return _i5;
           }
         }
       }
     }]);
     return Wrapper;
+  }();
+
+  var Store = function () {
+    function Store() {
+      classCallCheck(this, Store);
+
+      this.nextId = 0;
+      this.map = {};
+    }
+
+    createClass(Store, [{
+      key: "add",
+      value: function add(data) {
+        this.map[this.nextId++] = data;
+        return this.nextId - 1;
+      }
+    }, {
+      key: "remove",
+      value: function remove(id) {
+        if (this.map[id]) {
+          this.map[id] = null;
+          return ture;
+        }
+        return false;
+      }
+    }, {
+      key: "get",
+      value: function get$$1(id) {
+        return this.map[id];
+      }
+    }, {
+      key: "all",
+      value: function all() {
+        var files = [];
+        for (var key in this.map) {
+          if (this.map[key]) {
+            files.push(this.map[key]);
+          }
+        }
+        return files;
+      }
+    }]);
+    return Store;
   }();
 
   function extend(target) {
@@ -492,9 +569,11 @@
   }
 
   var DEFAULT_OPTIONS = {
-    elementSize: 78,
+    elementSize: 100,
     elementPadding: 5,
-    transitionDuration: 200,
+    elementDragScale: 1.1,
+    dragDelay: 200,
+    transitionDuration: 300,
     useTransform: true,
     api: '/api/upload'
   };
@@ -502,15 +581,22 @@
   function initMixin$1(ImageUpload) {
     ImageUpload.prototype._init = function (options) {
       this._handleOptions(options);
-      this._initDOM();
-      // this.files = []
+      this._initWrapper();
+      this.store = new Store();
+    };
+
+    ImageUpload.prototype.remove = function (id) {
+      // this.store.remove(id)
+      this.wrapper.removeElement();
     };
 
     ImageUpload.prototype.send = function () {
-      console.log(this.wrapper.slots);
-      console.log(this.inputEl.files);
-      // let formData = new FormData()
-      // formData.append("file" , picFileList[i])
+      var formData = new FormData();
+      formData.append('file', window.file);
+      formData.append('name', 'symind');
+      var xhr = new XMLHttpRequest();
+      xhr.open('POST', 'http://localhost:8080/api/upload');
+      xhr.send(formData);
     };
 
     ImageUpload.prototype._handleOptions = function (options) {
@@ -522,7 +608,7 @@
       this.options.useTransform = this.options.useTransform && hasTransform;
     };
 
-    ImageUpload.prototype._initDOM = function () {
+    ImageUpload.prototype._initWrapper = function () {
       var labelEl = this.labelEl = document.createElement('label');
       labelEl.style.display = 'inline-block';
       labelEl.style.boxSizing = 'border-box';
@@ -586,22 +672,22 @@
       var _this = this;
 
       var file = event.srcElement.files[0];
-      // this.files.push(file)
+      var id = this.store.add(file);
 
       var reader = new FileReader();
       reader.readAsDataURL(file);
 
       reader.onloadstart = function (e) {
-        console.log("开始读取....");
+        info("开始读取....");
       };
       reader.onprogress = function (e) {
-        console.log("正在读取中....");
+        info("正在读取中....");
       };
       reader.onabort = function (e) {
-        console.log("中断读取....");
+        info("中断读取....");
       };
       reader.onerror = function (e) {
-        console.log("读取异常....");
+        info("读取异常....");
       };
 
       reader.onload = function (event) {
@@ -612,7 +698,7 @@
           divEl.style.backgroundRepeat = 'no-repeat';
           divEl.style.backgroundSize = 'cover';
           divEl.style.backgroundPosition = 'center';
-          _this.wrapper.appendElement(divEl);
+          _this.wrapper.appendElement(divEl, id);
 
           _this._layout();
           _this._send();
@@ -629,8 +715,11 @@
 
     ImageUpload.prototype._layout = function () {
       var last = this.wrapper.slots.length % this.wrapper.column;
-      if (last === 0) {} else {
-        var elementSize = this.options.elementSize;
+      var elementSize = this.options.elementSize;
+      if (last === 0) {
+        this.labelEl.style.top = this.wrapper.row * elementSize + 'px';
+        this.labelEl.style.left = 0;
+      } else {
         this.labelEl.style.top = (this.wrapper.row - 1) * elementSize + 'px';
         this.labelEl.style.left = last * elementSize + 'px';
       }

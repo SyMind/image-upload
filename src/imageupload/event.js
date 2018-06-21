@@ -1,22 +1,24 @@
+import { info } from '../util/debug'
+
 export function eventMixin (ImageUpload) {
   ImageUpload.prototype._change = function (event) {
     let file = event.srcElement.files[0]
-    // this.files.push(file)
+    let id = this.store.add(file)
 
     let reader = new FileReader()
     reader.readAsDataURL(file)
 
     reader.onloadstart = function (e) {
-        console.log("开始读取....");
+      info("开始读取....")
     }
     reader.onprogress = function (e) {
-        console.log("正在读取中....");
+      info("正在读取中....")
     }
     reader.onabort = function (e) {
-        console.log("中断读取....");
+      info("中断读取....")
     }
     reader.onerror = function (e) {
-        console.log("读取异常....");
+      info("读取异常....")
     }
 
     reader.onload = (event) => {
@@ -27,7 +29,7 @@ export function eventMixin (ImageUpload) {
         divEl.style.backgroundRepeat = 'no-repeat'
         divEl.style.backgroundSize = 'cover'
         divEl.style.backgroundPosition = 'center'
-        this.wrapper.appendElement(divEl)
+        this.wrapper.appendElement(divEl, id)
 
         this._layout()
         this._send()
@@ -40,15 +42,15 @@ export function eventMixin (ImageUpload) {
 
   ImageUpload.prototype._send = function (file) {
     let xhr = new XMLHttpRequest()
-
   }
 
   ImageUpload.prototype._layout = function () {
     let last = this.wrapper.slots.length % this.wrapper.column
+    let elementSize = this.options.elementSize
     if (last === 0) {
-
+      this.labelEl.style.top = this.wrapper.row * elementSize + 'px'
+      this.labelEl.style.left = 0
     } else {
-      let elementSize = this.options.elementSize
       this.labelEl.style.top = (this.wrapper.row - 1) * elementSize + 'px'
       this.labelEl.style.left = last * elementSize + 'px'
     }

@@ -4,12 +4,15 @@ import {
 } from '../util/dom'
 
 import Wrapper from './wrapper'
+import Store from './store'
 import { extend } from '../util/lang'
 
 const DEFAULT_OPTIONS = {
-  elementSize: 78,
+  elementSize: 100,
   elementPadding: 5,
-  transitionDuration: 200,
+  elementDragScale: 1.1,
+  dragDelay: 200,
+  transitionDuration: 300,
   useTransform: true,
   api: '/api/upload'
 }
@@ -17,15 +20,22 @@ const DEFAULT_OPTIONS = {
 export function initMixin (ImageUpload) {
   ImageUpload.prototype._init = function (options) {
     this._handleOptions(options)
-    this._initDOM()
-    // this.files = []
+    this._initWrapper()
+    this.store = new Store()
+  }
+
+  ImageUpload.prototype.remove = function (id) {
+    // this.store.remove(id)
+    this.wrapper.removeElement()
   }
 
   ImageUpload.prototype.send = function () {
-    console.log(this.wrapper.slots)
-    console.log(this.inputEl.files)
-    // let formData = new FormData()
-    // formData.append("file" , picFileList[i])
+    let formData = new FormData()
+    formData.append('file', window.file)
+    formData.append('name', 'symind')
+    var xhr = new XMLHttpRequest()
+    xhr.open('POST', 'http://localhost:8080/api/upload')
+    xhr.send(formData)
   }
 
   ImageUpload.prototype._handleOptions = function (options) {
@@ -37,7 +47,7 @@ export function initMixin (ImageUpload) {
     this.options.useTransform = this.options.useTransform && hasTransform
   }
 
-  ImageUpload.prototype._initDOM = function () {
+  ImageUpload.prototype._initWrapper = function () {
     let labelEl = this.labelEl = document.createElement('label')
     labelEl.style.display = 'inline-block'
     labelEl.style.boxSizing = 'border-box'
