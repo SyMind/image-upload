@@ -1,4 +1,4 @@
-let elementStyle = document.createElement('div').style
+const elementStyle = document.body.style
 
 let vendor = (() => {
   let transformNames = {

@@ -6,7 +6,7 @@
   "scripts": {
     "build": "node_modules/.bin/rollup -c",
     "watch": "node_modules/.bin/rollup -c --watch",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "mocha --recursive \"./test/**/*.js\" --require babel-core/register"
   },
   "author": "",
   "license": "ISC",
@@ -15,8 +15,10 @@
     "babel-plugin-external-helpers": "^6.22.0",
     "babel-preset-es2015-rollup": "^3.0.0",
     "babel-preset-latest": "^6.24.1",
+    "chai": "^4.1.2",
     "connect-multiparty": "^2.1.0",
     "express": "^4.16.2",
+    "mocha": "^5.2.0",
     "rollup": "^0.57.1",
     "rollup-plugin-babel": "^3.0.3",
     "shelljs": "^0.7.8"
