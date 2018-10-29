@@ -29,5 +29,8 @@
     "rollup-plugin-babel": "^3.0.7",
     "shelljs": "^0.7.8",
     "webpack": "^4.18.0"
+  },
+  "dependencies": {
+    "babel-polyfill": "^6.26.0"
   }
 }

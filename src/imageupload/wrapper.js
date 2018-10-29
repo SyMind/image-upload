@@ -1,4 +1,4 @@
-import Dragable from '../Dragable'
+import Dragable from '../Dragable/index'
 
 export default class Wrapper {
   constructor(el, options) {

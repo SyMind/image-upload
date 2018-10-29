@@ -6,7 +6,7 @@ export default class Dragable {
     this.el = el
     this.options = options
 
-    this._init()
+    this._init(options)
   }
 }
 

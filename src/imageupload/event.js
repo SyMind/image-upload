@@ -1,4 +1,4 @@
-import { info } from '../util/debug'
+import { info } from '../utils/debug'
 
 export function eventMixin (ImageUpload) {
   ImageUpload.prototype._change = function (event) {

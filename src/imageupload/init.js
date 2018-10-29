@@ -1,11 +1,11 @@
 import {
   hasTransition,
   hasTransform
-} from '../util/dom'
+} from '../utils/dom'
 
 import Wrapper from './wrapper'
 import Store from './store'
-import { extend } from '../util/lang'
+import { extend } from '../utils/lang'
 
 const DEFAULT_OPTIONS = {
   elementSize: 100,

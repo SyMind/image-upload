@@ -1,10 +1,10 @@
 (function (global, factory) {
-  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory() :
-  typeof define === 'function' && define.amd ? define(factory) :
+  typeof exports === 'object' && typeof module !== 'undefined' ? module.exports = factory(require('babel-polyfill')) :
+  typeof define === 'function' && define.amd ? define(['babel-polyfill'], factory) :
   (global.ImageUpload = factory());
 }(this, (function () { 'use strict';
 
-  var elementStyle = document.createElement('div').style;
+  var elementStyle = document.body.style;
 
   var vendor = function () {
     var transformNames = {
@@ -68,14 +68,34 @@
     mouseout: MOUSE_EVENT
   };
 
+  function extend(target) {
+    for (var _len = arguments.length, rest = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
+      rest[_key - 1] = arguments[_key];
+    }
+
+    for (var i = 0; i < rest.length; i++) {
+      var source = rest[i];
+      for (var key in source) {
+        target[key] = source[key];
+      }
+    }
+    return target;
+  }
+
+  var DEFAULT_OPTIONS = {
+    dragDelay: 200,
+    transitionDuration: 300
+  };
+
   function initMixin(Element) {
-    Element.prototype._init = function () {
+    Element.prototype._init = function (options) {
       this.endX = null;
       this.endY = null;
 
       this.moveEvent = null;
       this.endEvent = null;
 
+      this.options = extend({}, DEFAULT_OPTIONS, options);
       this._watchTransition();
       this._observeDOMEvents();
     };
@@ -187,14 +207,6 @@
     };
   }
 
-  function warn(msg) {
-    console.error("[ImageUpload warn]: " + msg);
-  }
-
-  function info(msg) {
-    console.info("[ImageUpload info]: " + msg);
-  }
-
   function coreMixin(Element) {
     Element.prototype.moveTo = function (x, y) {
       this.el.style.transitionDuration = this.options.transitionDuration + 'ms';
@@ -205,6 +217,7 @@
     Element.prototype._start = function (event) {
       var _this = this;
 
+      event.preventDefault();
       event.stopPropagation();
 
       clearTimeout(this.timer);
@@ -232,6 +245,7 @@
     };
 
     Element.prototype._move = function (event) {
+      event.preventDefault();
       event.stopPropagation();
 
       if (eventType[event.type] !== this.initiated || !this.flag) {
@@ -250,6 +264,7 @@
     };
 
     Element.prototype._end = function (event) {
+      event.preventDefault();
       event.stopPropagation();
 
       clearTimeout(this.timer);
@@ -317,18 +332,18 @@
     };
   }();
 
-  var Element = function Element(el, options) {
-    classCallCheck(this, Element);
+  var Dragable = function Dragable(el, options) {
+    classCallCheck(this, Dragable);
 
     this.el = el;
     this.options = options;
 
-    this._init();
+    this._init(options);
   };
 
 
-  initMixin(Element);
-  coreMixin(Element);
+  initMixin(Dragable);
+  coreMixin(Dragable);
 
   var Wrapper = function () {
     function Wrapper(el, options) {
@@ -381,7 +396,7 @@
 
         this.el.appendChild(divEl);
 
-        var element = new Element(divEl, this.options);
+        var element = new Dragable(divEl, this.options);
         element.idx = idx;
         element.x = x;
         element.y = y;
@@ -554,21 +569,7 @@
     return Store;
   }();
 
-  function extend(target) {
-    for (var _len = arguments.length, rest = Array(_len > 1 ? _len - 1 : 0), _key = 1; _key < _len; _key++) {
-      rest[_key - 1] = arguments[_key];
-    }
-
-    for (var i = 0; i < rest.length; i++) {
-      var source = rest[i];
-      for (var key in source) {
-        target[key] = source[key];
-      }
-    }
-    return target;
-  }
-
-  var DEFAULT_OPTIONS = {
+  var DEFAULT_OPTIONS$1 = {
     elementSize: 100,
     elementPadding: 5,
     elementDragScale: 1.1,
@@ -600,7 +601,7 @@
     };
 
     ImageUpload.prototype._handleOptions = function (options) {
-      this.options = extend({}, DEFAULT_OPTIONS, options);
+      this.options = extend({}, DEFAULT_OPTIONS$1, options);
 
       this.translateZ = this.options.HWCompositing ? ' translateZ(0)' : '';
 
@@ -665,6 +666,14 @@
           break;
       }
     };
+  }
+
+  function warn(msg) {
+    console.error("[ImageUpload warn]: " + msg);
+  }
+
+  function info(msg) {
+    console.info("[ImageUpload info]: " + msg);
   }
 
   function eventMixin(ImageUpload) {
@@ -823,6 +832,8 @@
   initMixin$1(ImageUpload);
   eventMixin(ImageUpload);
   compressMixin(ImageUpload);
+
+  ImageUpload.Dragable = Dragable;
 
   return ImageUpload;
 

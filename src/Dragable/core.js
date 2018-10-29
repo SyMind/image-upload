@@ -1,8 +1,7 @@
 import {
   eventType,
   TOUCH_EVENT
-} from '../util/dom'
-import { info } from '../util/debug'
+} from '../utils/dom'
 
 export function coreMixin (Element) {
   Element.prototype.moveTo = function (x, y) {
@@ -12,6 +11,7 @@ export function coreMixin (Element) {
   }
 
   Element.prototype._start = function (event) {
+    event.preventDefault()
     event.stopPropagation()
 
     clearTimeout(this.timer)
@@ -39,6 +39,7 @@ export function coreMixin (Element) {
   }
 
   Element.prototype._move = function (event) {
+    event.preventDefault()
     event.stopPropagation()
 
     if (eventType[event.type] !== this.initiated || !this.flag) {
@@ -57,6 +58,7 @@ export function coreMixin (Element) {
   }
 
   Element.prototype._end = function (event) {
+    event.preventDefault()
     event.stopPropagation()
 
     clearTimeout(this.timer)

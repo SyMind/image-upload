@@ -1,8 +1,10 @@
+import 'babel-polyfill';
+
+import Dragable from './Dragable/index'
 import { initMixin } from './imageUpload/init'
 import { eventMixin } from './imageUpload/event'
 import { compressMixin } from './imageUpload/compress'
-
-import { warn } from './util/debug'
+import { warn } from './utils/debug'
 
 export default class ImageUpload {
   constructor (el, options) {
@@ -57,3 +59,5 @@ export default class ImageUpload {
 initMixin(ImageUpload)
 eventMixin(ImageUpload)
 compressMixin(ImageUpload)
+
+ImageUpload.Dragable = Dragable

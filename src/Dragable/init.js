@@ -1,13 +1,20 @@
-import { style } from '../util/dom'
+import { style } from '../utils/dom'
+import { extend } from '../utils/lang'
+
+const DEFAULT_OPTIONS = {
+  dragDelay: 200,
+  transitionDuration: 300,
+}
 
 export function initMixin (Element) {
-  Element.prototype._init = function () {
+  Element.prototype._init = function (options) {
     this.endX = null
     this.endY = null
 
     this.moveEvent = null
     this.endEvent = null
 
+    this.options = extend({}, DEFAULT_OPTIONS, options)
     this._watchTransition()
     this._observeDOMEvents()
   }
