@@ -332,8 +332,8 @@
     };
   }();
 
-  var Dragable = function Dragable(el, options) {
-    classCallCheck(this, Dragable);
+  var Draggable = function Draggable(el, options) {
+    classCallCheck(this, Draggable);
 
     this.el = el;
     this.options = options;
@@ -342,8 +342,8 @@
   };
 
 
-  initMixin(Dragable);
-  coreMixin(Dragable);
+  initMixin(Draggable);
+  coreMixin(Draggable);
 
   var Wrapper = function () {
     function Wrapper(el, options) {
@@ -396,7 +396,7 @@
 
         this.el.appendChild(divEl);
 
-        var element = new Dragable(divEl, this.options);
+        var element = new Draggable(divEl, this.options);
         element.idx = idx;
         element.x = x;
         element.y = y;
@@ -833,7 +833,7 @@
   eventMixin(ImageUpload);
   compressMixin(ImageUpload);
 
-  ImageUpload.Dragable = Dragable;
+  ImageUpload.Draggable = Draggable;
 
   return ImageUpload;
 

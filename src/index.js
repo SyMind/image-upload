@@ -1,6 +1,6 @@
 import 'babel-polyfill';
 
-import Dragable from './Dragable/index'
+import Draggable from './Draggable/index'
 import { initMixin } from './imageUpload/init'
 import { eventMixin } from './imageUpload/event'
 import { compressMixin } from './imageUpload/compress'
@@ -60,4 +60,4 @@ initMixin(ImageUpload)
 eventMixin(ImageUpload)
 compressMixin(ImageUpload)
 
-ImageUpload.Dragable = Dragable
+ImageUpload.Draggable = Draggable

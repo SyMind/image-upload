@@ -1,4 +1,4 @@
-import Dragable from '../Dragable/index'
+import Draggable from '../Draggable/index'
 
 export default class Wrapper {
   constructor(el, options) {
@@ -46,7 +46,7 @@ export default class Wrapper {
 
     this.el.appendChild(divEl)
 
-    let element = new Dragable(divEl, this.options)
+    let element = new Draggable(divEl, this.options)
     element.idx = idx
     element.x = x
     element.y = y

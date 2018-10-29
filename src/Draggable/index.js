@@ -1,7 +1,7 @@
 import { initMixin } from './init'
 import { coreMixin } from './core'
 
-export default class Dragable {
+export default class Draggable {
   constructor(el, options) {
     this.el = el
     this.options = options
@@ -10,5 +10,5 @@ export default class Dragable {
   }
 }
 
-initMixin(Dragable)
-coreMixin(Dragable)
+initMixin(Draggable)
+coreMixin(Draggable)

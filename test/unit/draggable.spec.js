@@ -1,4 +1,4 @@
-import Dragable from '../../src/Dragable'
+import Draggable from '../../src/Draggable'
 
 import {
   dispatchTouchStart,
@@ -6,10 +6,10 @@ import {
   dispatchTouchEnd
 } from '../utils/event'
 
-describe('Dragable', () => {
+describe('Draggable', () => {
   it('start', () => {
     const el = document.createElement('div')
-    const dragableEl = new Dragable(el)
+    const draggableEl = new Draggable(el)
     dispatchTouchStart()
   })
 })
