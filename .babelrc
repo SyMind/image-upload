@@ -8,6 +8,5 @@
         }
       }
     ]
-  ],
-  "plugins": ["external-helpers"]
+  ]
 }

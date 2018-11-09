@@ -2,24 +2,30 @@ import { style } from '../utils/dom'
 import { extend } from '../utils/lang'
 
 const DEFAULT_OPTIONS = {
-  dragDelay: 200,
+  dragDelay: 0,
   transitionDuration: 300,
 }
 
-export function initMixin (Element) {
-  Element.prototype._init = function (options) {
+export function initMixin (Draggable) {
+  Draggable.prototype._init = function (options) {
+    this.options = extend({}, DEFAULT_OPTIONS, options)
+
+    this._events = {}
+
     this.endX = null
     this.endY = null
 
     this.moveEvent = null
     this.endEvent = null
 
-    this.options = extend({}, DEFAULT_OPTIONS, options)
+    if (!this.options.container) {
+      this.options.container = this.el
+    }
     this._watchTransition()
     this._observeDOMEvents()
   }
 
-  Element.prototype._watchTransition = function () {
+  Draggable.prototype._watchTransition = function () {
     let isInTransition = false
     let x = 0
     let y = 0
@@ -78,25 +84,27 @@ export function initMixin (Element) {
     })
   }
 
-  Element.prototype._observeDOMEvents = function () {
-    this.el.addEventListener('touchstart', this)
-    this.el.addEventListener('mousedown', this)
+  Draggable.prototype._observeDOMEvents = function () {
+    const el = this.options.container || this.el
 
-    this.el.addEventListener('touchmove', this)
-    this.el.addEventListener('mousemove', this)
+    el.addEventListener('touchstart', this)
+    el.addEventListener('mousedown', this)
 
-    this.el.addEventListener('touchend', this)
-    this.el.addEventListener('mouseup', this)
-    this.el.addEventListener('touchcancel', this)
-    this.el.addEventListener('mousecancel', this)
-    this.el.addEventListener('mouseout', this)
+    el.addEventListener('touchmove', this)
+    el.addEventListener('mousemove', this)
 
-    this.el.addEventListener(style.transitionEnd, this)
+    el.addEventListener('touchend', this)
+    el.addEventListener('mouseup', this)
+    el.addEventListener('touchcancel', this)
+    el.addEventListener('mousecancel', this)
+    el.addEventListener('mouseout', this)
 
-    this.el.addEventListener('dragstart', this)
+    el.addEventListener(style.transitionEnd, this)
+
+    el.addEventListener('dragstart', this)
   }
 
-  Element.prototype.handleEvent = function (event) {
+  Draggable.prototype.handleEvent = function (event) {
     switch (event.type) {
       case 'touchstart':
       case 'mousedown':

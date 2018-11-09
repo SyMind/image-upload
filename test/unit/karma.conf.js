@@ -1,6 +1,6 @@
 module.exports = function(config) {
   config.set({
-    frameworks: ['mocha'],
+    frameworks: ['mocha', 'sinon-chai'],
     files: ['**/*.spec.js'],
     preprocessors: {
       '**/*.spec.js': ['webpack']
@@ -23,7 +23,7 @@ module.exports = function(config) {
     colors: true,
     logLevel: config.LOG_INFO,
     autoWatch: true,
-    browsers: ['PhantomJS'],
+    browsers: ['Chrome'],
     singleRun: true
   })
 }

@@ -3,24 +3,27 @@ import {
   TOUCH_EVENT
 } from '../utils/dom'
 
-export function coreMixin (Element) {
-  Element.prototype.moveTo = function (x, y) {
+export function coreMixin (Draggable) {
+  Draggable.prototype.moveTo = function (x, y) {
     this.el.style.transitionDuration = this.options.transitionDuration + 'ms'
     this.x = x
     this.y = y
   }
 
-  Element.prototype._start = function (event) {
-    event.preventDefault()
-    event.stopPropagation()
+  Draggable.prototype._start = function (event) {
+    if (event.srcElement !== this.el) {
+      return
+    }
+
+    this.trigger('start')
 
     clearTimeout(this.timer)
-    this.flag = false
-    this.timer = setTimeout(() => {
-      this.scaleX = 1.1
-      this.scaleY = 1.1
-      this.flag = true
-    }, this.options.dragDelay)
+    // this.flag = false
+    // this.timer = setTimeout(() => {
+    //   this.scaleX = 1.1
+    //   this.scaleY = 1.1
+    //   this.flag = true
+    // }, this.options.dragDelay)
 
     let _eventType = eventType[event.type]
     if (_eventType !== TOUCH_EVENT && event.button !== 0) {
@@ -38,11 +41,8 @@ export function coreMixin (Element) {
     this._pageY = touch.pageY
   }
 
-  Element.prototype._move = function (event) {
-    event.preventDefault()
-    event.stopPropagation()
-
-    if (eventType[event.type] !== this.initiated || !this.flag) {
+  Draggable.prototype._move = function (event) {
+    if (eventType[event.type] !== this.initiated) {
       return
     }
 
@@ -52,15 +52,13 @@ export function coreMixin (Element) {
     this.x = this.startX + deltaX
     this.y = this.startY + deltaY
 
-    if (this.moveEvent) {
-      this.moveEvent(this)
-    }
+    // if (this.moveEvent) {
+    //   this.moveEvent(this)
+    // }
+    this.trigger('move')
   }
 
-  Element.prototype._end = function (event) {
-    event.preventDefault()
-    event.stopPropagation()
-
+  Draggable.prototype._end = function (event) {
     clearTimeout(this.timer)
 
     if (eventType[event.type] !== this.initiated) {
@@ -92,12 +90,12 @@ export function coreMixin (Element) {
     this.scaleY = 1
     this.el.style.zIndex = 1
 
-    if (this.moveEvent) {
-      this.moveEvent(this)
-    }
+    // if (this.moveEvent) {
+    //   this.moveEvent(this)
+    // }
   }
 
-  Element.prototype._transitionEnd = function (event) {
+  Draggable.prototype._transitionEnd = function (event) {
     this.isInTransition = false
   }
 }

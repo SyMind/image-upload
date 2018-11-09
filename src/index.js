@@ -1,4 +1,4 @@
-import 'babel-polyfill';
+// import 'babel-polyfill';
 
 import Draggable from './Draggable/index'
 import { initMixin } from './imageUpload/init'
