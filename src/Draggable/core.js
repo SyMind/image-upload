@@ -17,14 +17,6 @@ export function coreMixin (Draggable) {
 
     this.trigger('start')
 
-    clearTimeout(this.timer)
-    // this.flag = false
-    // this.timer = setTimeout(() => {
-    //   this.scaleX = 1.1
-    //   this.scaleY = 1.1
-    //   this.flag = true
-    // }, this.options.dragDelay)
-
     let _eventType = eventType[event.type]
     if (_eventType !== TOUCH_EVENT && event.button !== 0) {
       return
@@ -52,37 +44,20 @@ export function coreMixin (Draggable) {
     this.x = this.startX + deltaX
     this.y = this.startY + deltaY
 
-    // if (this.moveEvent) {
-    //   this.moveEvent(this)
-    // }
     this.trigger('move')
   }
 
   Draggable.prototype._end = function (event) {
-    clearTimeout(this.timer)
-
     if (eventType[event.type] !== this.initiated) {
       return
     }
     this.initiated = null
 
-    if (this.endEvent) {
-      this.endEvent(this)
-    }
-
     this.isInTransition = true
     this.el.style.transitionDuration = this.options.transitionDuration + 'ms'
 
-    if (this.endX !== null) {
-      this.x = this.endX
-    } else {
-      this.x = this.startX
-    }
-    if (this.endY !== null) {
-      this.y = this.endY
-    } else {
-      this.y = this.startY
-    }
+    this.x = this.endX !== null ? this.endX : this.startX
+    this.y = this.endY !== null ? this.endY : this.startY
 
     this.endX = null
     this.endY = null
@@ -90,9 +65,7 @@ export function coreMixin (Draggable) {
     this.scaleY = 1
     this.el.style.zIndex = 1
 
-    // if (this.moveEvent) {
-    //   this.moveEvent(this)
-    // }
+    this.trigger('end')
   }
 
   Draggable.prototype._transitionEnd = function (event) {

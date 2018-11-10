@@ -2,6 +2,7 @@ import { style } from '../utils/dom'
 import { extend } from '../utils/lang'
 
 const DEFAULT_OPTIONS = {
+  wrapper: document.documentElement,
   dragDelay: 0,
   transitionDuration: 300,
 }
@@ -18,9 +19,6 @@ export function initMixin (Draggable) {
     this.moveEvent = null
     this.endEvent = null
 
-    if (!this.options.container) {
-      this.options.container = this.el
-    }
     this._watchTransition()
     this._observeDOMEvents()
   }
@@ -85,23 +83,21 @@ export function initMixin (Draggable) {
   }
 
   Draggable.prototype._observeDOMEvents = function () {
-    const el = this.options.container || this.el
+    const { wrapper } = this.options
 
-    el.addEventListener('touchstart', this)
-    el.addEventListener('mousedown', this)
+    this.el.addEventListener('touchstart', this)
+    this.el.addEventListener('mousedown', this)
 
-    el.addEventListener('touchmove', this)
-    el.addEventListener('mousemove', this)
+    wrapper.addEventListener('touchmove', this)
+    wrapper.addEventListener('mousemove', this)
 
-    el.addEventListener('touchend', this)
-    el.addEventListener('mouseup', this)
-    el.addEventListener('touchcancel', this)
-    el.addEventListener('mousecancel', this)
-    el.addEventListener('mouseout', this)
+    wrapper.addEventListener('touchend', this)
+    wrapper.addEventListener('mouseup', this)
+    wrapper.addEventListener('touchcancel', this)
+    wrapper.addEventListener('mousecancel', this)
+    // wrapper.addEventListener('mouseout', this)
 
-    el.addEventListener(style.transitionEnd, this)
-
-    el.addEventListener('dragstart', this)
+    this.el.addEventListener(style.transitionEnd, this)
   }
 
   Draggable.prototype.handleEvent = function (event) {
@@ -126,9 +122,6 @@ export function initMixin (Draggable) {
       case 'oTransitionEnd':
       case 'MSTransitionEnd':
         this._transitionEnd(event)
-        break
-      case 'dragstart':
-        event.preventDefault()
         break
     }
   }
